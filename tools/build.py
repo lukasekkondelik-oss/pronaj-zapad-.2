@@ -3,9 +3,14 @@
 
 Změna domény, kontaktů nebo textů = úprava konstant níže a nové spuštění.
 """
-import json, html, pathlib, datetime
+import json, html, pathlib, datetime, os, re, shutil, unicodedata, urllib.request, urllib.parse
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+OUT = ROOT / "dist"
+STATIC = ROOT / "static"
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+LISTINGS = []
 DOMAIN = "https://pronajemzapad.cz"          # TODO: nahradit skutečnou doménou
 FORM_ENDPOINT = ""                            # TODO: URL formulářového backendu (n8n webhook, Formspree…); prázdné = mailto
 MAIN_SITE = "https://alfaestate.cz"
@@ -126,7 +131,7 @@ def header(active=""):
 <a class="brand" href="/" aria-label="Pronájmy Západ – úvodní strana">{ROOF}<span><b>Pronájmy Západ</b><small>Karlovarský kraj</small></span></a>
 <button class="burger" aria-expanded="false" aria-controls="nav">Menu</button>
 <nav class="nav" id="nav" aria-label="Hlavní navigace">
-<a href="/#jak-to-funguje">Jak to funguje</a><a href="/#pro-majitele">Pro majitele</a><a href="/#lokality">Lokality</a><a href="/#faq">Časté dotazy</a>
+<a href="/nabidky/">Nabídky</a><a href="/#jak-to-funguje">Pro majitele</a><a href="/#lokality">Lokality</a><a href="/#faq">Časté dotazy</a>
 <a class="btn sm" href="/#formular">Vložit nabídku zdarma</a></nav></div></header>'''
 
 def footer():
@@ -136,7 +141,7 @@ def footer():
 <div class="cols">
 <div><a class="brand" href="/">{ROOF}<span><b>Pronájmy Západ</b><small>Karlovarský kraj</small></span></a>
 <p style="margin-top:18px">Regionální portál pronájmů pro majitele nemovitostí. Provozuje realitní kancelář <a href="{MAIN_SITE}" rel="noopener">ALFA ESTATE V&amp;S Partners</a>, certifikovanou realitní kancelář v Karlových Varech. Člen Realitní komory ČR.</p></div>
-<div><h4>Lokality</h4><ul>{pl}</ul></div>
+<div><h4>Lokality</h4><ul><li><a href="/nabidky/">Aktuální nabídky</a></li>{pl}</ul></div>
 <div><h4>Kontakt</h4><ul>
 <li>{E(CO["street"])}, {E(CO["district"])}<br>{CO["zip"]} {CO["city"]}</li>{ph}
 <li><a href="mailto:{CO["email"]}">{CO["email"]}</a></li><li>IČO: {CO["ico"]}</li></ul></div>
@@ -192,7 +197,7 @@ def page(path, title, desc, body, graph, og_title=None):
 </body></html>'''
 
 def write(path, content):
-    p = ROOT / path.strip("/") / "index.html" if path != "/" else ROOT / "index.html"
+    p = OUT / path.strip("/") / "index.html" if path != "/" else OUT / "index.html"
     p.parent.mkdir(parents=True, exist_ok=True); p.write_text(content, encoding="utf-8")
 
 # ---------- HOMEPAGE ----------
@@ -243,6 +248,7 @@ def home():
 <p><a href="{MAIN_SITE}" rel="noopener">Více o realitní kanceláři na alfaestate.cz →</a></p></div>
 </div></section>
 
+{latest_block()}
 <section class="alt" id="lokality"><div class="wrap">
 <div class="head"><div><span class="eyebrow">Lokality</span><h2>Pronájmy v celém Karlovarském kraji.</h2></div><p>Vyberte město a zjistěte, jak vám pomůžeme s pronájmem právě tam.</p></div>
 <div class="places">{places}</div></div></section>
@@ -283,6 +289,7 @@ def place_pages():
 {"".join(f"<p>{E(x)}</p>" for x in p["body"])}
 <ul class="ticks">{"".join(f'<li>{ICON[i]}<div><b>{t}</b></div></li>' for i,t in [("pen","Zveřejnění nabídky zdarma"),("image","Fotografie a poutavý text"),("chat","Prohlídky a komunikace se zájemci"),("home","Nájemní smlouva a předání")])}</ul>
 <p class="note">Zveřejnění je pro majitele zdarma. Doplňkové služby se sjednávají předem. Zavolejte na <a href="tel:+420603382392">603 382 392</a> nebo vyplňte formulář níže.</p></div></div></section>
+{city_block(p["name"])}
 <section class="formsec" id="formular"><div class="wrap fgrid"><div><span class="eyebrow">Formulář</span><h2>Vložte pronájem {E(p["loc"])}.</h2><p style="color:var(--muted)">Vyplňte základní údaje a ozveme se vám.</p></div>{form_html("p", p)}</div></section>
 <section class="alt"><div class="wrap"><h2>Časté dotazy</h2><div class="prose" style="max-width:820px">{faq_html(faq)}</div></div></section>
 <section><div class="wrap"><h2>Další lokality</h2><div class="places" style="grid-template-columns:repeat(4,1fr)">{others}</div></div></section>'''
@@ -315,23 +322,26 @@ def privacy():
 def not_found():
     body = '<section><div class="wrap"><div class="prose"><h1>Stránka nenalezena</h1><p>Tuhle adresu neznáme. Vraťte se na <a href="/">úvodní stranu</a> nebo nám zavolejte na <a href="tel:+420603382392">603 382 392</a>.</p></div></div></section>'
     h = page("/404.html", "Stránka nenalezena | Pronájmy Západ", "Stránka nenalezena.", body, [ORG]).replace('content="index,follow,max-image-preview:large,max-snippet:-1"', 'content="noindex"')
-    (ROOT / "404.html").write_text(h, encoding="utf-8")
+    (OUT / "404.html").write_text(h, encoding="utf-8")
 
 def static_files():
-    paths = ["/"] + [f"/pronajem-{s}/" for s in PLACES]
+    paths = ["/", "/nabidky/"] + [f"/pronajem-{s}/" for s in PLACES] + [f"/nabidky/{l['slug']}/" for l in LISTINGS]
     sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join(
         f"<url><loc>{url(p)}</loc><lastmod>{TODAY}</lastmod><priority>{'1.0' if p=='/' else '0.8'}</priority></url>\n" for p in paths) + "</urlset>\n"
-    (ROOT / "sitemap.xml").write_text(sm, encoding="utf-8")
+    (OUT / "sitemap.xml").write_text(sm, encoding="utf-8")
     bots = ["GPTBot","OAI-SearchBot","ChatGPT-User","ClaudeBot","Claude-SearchBot","Claude-User","PerplexityBot","Perplexity-User","Google-Extended","Applebot-Extended","CCBot"]
     rb = "User-agent: *\nAllow: /\n\n" + "".join(f"User-agent: {b}\nAllow: /\n\n" for b in bots) + f"Sitemap: {DOMAIN}/sitemap.xml\n"
-    (ROOT / "robots.txt").write_text(rb, encoding="utf-8")
+    (OUT / "robots.txt").write_text(rb, encoding="utf-8")
     ll = f"""# Pronájmy Západ
 
 > Regionální portál pro majitele nemovitostí, kteří chtějí pronajmout byt nebo dům v Karlovarském kraji. Zveřejnění nabídky je pro majitele zdarma; doplňkové služby (fotografie, prohlídky, nájemní smlouva) se sjednávají předem. Portál provozuje realitní kancelář ALFA ESTATE V&S Partners s.r.o. (IČO {CO["ico"]}), Karlovy Vary, člen Realitní komory ČR.
 
 ## Hlavní stránky
 - [Úvod – pronájem pro majitele]({DOMAIN}/): co nabízíme, jak spolupráce probíhá, formulář a časté dotazy
+- [Aktuální nabídky pronájmů]({DOMAIN}/nabidky/): byty a domy k pronájmu v Karlovarském kraji
 """ + "".join(f"- [Pronájem {p['name']}]({url(f'/pronajem-{s}/')}): {p['desc']}\n" for s, p in PLACES.items()) + f"""
+## Aktuální nabídky
+""" + ("".join(f"- [{l['title']}]({url('/nabidky/'+l['slug']+'/')}): {l['type']} {l.get('disposition') or ''}, {l['city']}, {czk(l['rent_czk'])}/měsíc\n" for l in LISTINGS) or "- Aktuálně žádné nabídky.\n") + f"""
 ## Fakta
 - Oblast působnosti: Karlovarský kraj (Karlovy Vary, Cheb, Sokolov, Mariánské Lázně, Ostrov a okolí)
 - Provozovna: {CO["street"]}, {CO["zip"]} {CO["city"]} – {CO["district"]}
@@ -340,8 +350,173 @@ def static_files():
 - Otevírací doba: Po–Pá 9:00–17:00, sobota dle dohody
 - Hlavní web realitní kanceláře: {MAIN_SITE}/
 """
-    (ROOT / "llms.txt").write_text(ll, encoding="utf-8")
+    (OUT / "llms.txt").write_text(ll, encoding="utf-8")
+
+# ---------- NABÍDKY ----------
+CONTACTS = {"sona": ("Soňa Petříková", "603 382 392", "+420603382392"), "vit": ("Vít Čirik", "776 686 776", "+420776686776")}
+FURNISHED = {"ano": "Zařízeno", "castecne": "Částečně zařízeno", "ne": "Nezařízeno"}
+SCHEMA_TYPE = {"Byt": "Apartment", "Rodinný dům": "House"}
+
+def czk(n):
+    return f"{int(n):,}".replace(",", " ") + " Kč"
+
+def short_date(d):
+    y, m, dd = d[:10].split("-")
+    return f"{int(dd)}. {int(m)}. {y}"
+
+def photo_url(path):
+    return f"{SUPABASE_URL}/storage/v1/object/public/listings/{urllib.parse.quote(path)}" if SUPABASE_URL else "/assets/placeholder.svg"
+
+def photos_of(l):
+    return [{"url": photo_url(p["path"]), "alt": p.get("alt") or l["title"]} for p in (l.get("photos") or []) if p.get("path")]
+
+def load_listings():
+    """Supabase REST (anon klíč vidí jen zveřejněné nabídky). Bez konfigurace: prázdný seznam,
+    nebo ukázková data při USE_SAMPLE=1."""
+    if os.environ.get("USE_SAMPLE") == "1":
+        return json.loads((ROOT / "tools" / "sample_listings.json").read_text(encoding="utf-8"))
+    if not (SUPABASE_URL and SUPABASE_ANON_KEY):
+        print("SUPABASE_URL / SUPABASE_ANON_KEY nenastaveno – nabídky budou prázdné.")
+        return []
+    q = f"{SUPABASE_URL}/rest/v1/listings?select=*&status=eq.published&order=published_at.desc"
+    req = urllib.request.Request(q, headers={"apikey": SUPABASE_ANON_KEY, "Authorization": f"Bearer {SUPABASE_ANON_KEY}"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+def card(l):
+    ph = photos_of(l)
+    img = (f'<img src="{E(ph[0]["url"])}" alt="{E(ph[0]["alt"])}" loading="lazy" width="640" height="440">' if ph
+           else f'<div class="noimg">{ICON["image"]}</div>')
+    meta = " · ".join(x for x in [l.get("disposition"), f'{l["area_m2"]} m²' if l.get("area_m2") else None] if x)
+    where = l["city"] + (f' – {l["district"]}' if l.get("district") else "")
+    return (f'<a class="lcard" href="/nabidky/{E(l["slug"])}/" data-city="{E(l["city"])}" data-type="{E(l["type"])}" '
+            f'data-disp="{E(l.get("disposition") or "")}" data-rent="{int(l["rent_czk"])}">'
+            f'<div class="lphoto">{img}</div><div class="lbody"><span class="lwhere">{E(where)}</span>'
+            f'<h3>{E(l["title"])}</h3><span class="lmeta">{E(l["type"])}{" · " + E(meta) if meta else ""}</span>'
+            f'<b class="lprice">{czk(l["rent_czk"])}<small> / měsíc</small></b></div></a>')
+
+def latest_block():
+    if not LISTINGS: return ""
+    return ('<section id="nabidky"><div class="wrap"><div class="head"><div><span class="eyebrow">Aktuální nabídky</span><h2>Byty a domy k pronájmu.</h2></div>'
+            '<p>Nemovitosti, které právě nabízíme v Karlovarském kraji.</p></div>'
+            f'<div class="lgrid">{"".join(card(l) for l in LISTINGS[:3])}</div>'
+            '<p style="margin-top:28px"><a class="btn" href="/nabidky/">Všechny nabídky →</a></p></div></section>')
+
+def city_block(city):
+    items = [l for l in LISTINGS if l["city"].lower() == city.lower()]
+    if not items: return ""
+    return (f'<section class="alt"><div class="wrap"><h2>Aktuální nabídky: {E(city)}</h2><div class="lgrid">{"".join(card(l) for l in items)}</div></div></section>')
+
+def listings_page():
+    path = "/nabidky/"
+    cities = sorted({l["city"] for l in LISTINGS}); types = sorted({l["type"] for l in LISTINGS})
+    disps = sorted({l["disposition"] for l in LISTINGS if l.get("disposition")})
+    opt = lambda xs, ph: f'<option value="">{ph}</option>' + "".join(f'<option>{E(x)}</option>' for x in xs)
+    if LISTINGS:
+        inner = f'''<form class="filters" data-filters aria-label="Filtr nabídek">
+<div><label for="fc">Město</label><select id="fc" data-f="city">{opt(cities,"Všechna")}</select></div>
+<div><label for="ft">Typ</label><select id="ft" data-f="type">{opt(types,"Všechny")}</select></div>
+<div><label for="fd">Dispozice</label><select id="fd" data-f="disp">{opt(disps,"Všechny")}</select></div>
+<div><label for="fr">Nájemné do (Kč)</label><input id="fr" data-f="rent" inputmode="numeric" placeholder="Např. 18000"></div>
+</form><p class="count" data-count aria-live="polite"></p>
+<div class="lgrid" data-list>{"".join(card(l) for l in LISTINGS)}</div>
+<p class="empty" data-empty hidden>Pro zvolený filtr nic nemáme. Zkuste ho upravit, nebo nám zavolejte na <a href="tel:+420603382392">603 382 392</a>.</p>'''
+    else:
+        inner = '<div class="note" style="max-width:640px"><b>Aktuálně nemáme žádné volné nabídky.</b> Hledáte byt nebo dům v Karlovarském kraji? Zavolejte nám na <a href="tel:+420603382392">603 382 392</a> nebo napište na <a href="mailto:alfaestate@alfaestate.cz">alfaestate@alfaestate.cz</a>. Nové nabídky přibývají průběžně.</div>'
+    body = f'''<section class="hero dark" style="padding:56px 0 64px">{SKYLINE}<div class="wrap">
+<p class="crumbs"><a href="/">Pronájmy Západ</a> › Nabídky</p>
+<h1 style="font-size:clamp(2rem,4.4vw,3.2rem);max-width:22ch">Nabídky pronájmu v Karlovarském kraji</h1>
+<p class="lead">Aktuální byty a domy k pronájmu. Ke každé nabídce rádi domluvíme prohlídku.</p></div></section>
+<section><div class="wrap">{inner}</div></section>
+<section class="alt"><div class="wrap split"><div><span class="eyebrow">Pro majitele</span><h2>Pronajímáte vlastní nemovitost?</h2><p style="color:var(--muted)">Zveřejnění nabídky je pro majitele zdarma.</p></div><div><a class="btn" href="/#formular">Chci nabídnout nemovitost →</a></div></div></section>'''
+    graph = [ORG,
+      {"@type": ["CollectionPage"], "@id": url(path) + "#webpage", "url": url(path), "name": "Nabídky pronájmu v Karlovarském kraji", "isPartOf": {"@id": DOMAIN + "/#website"}, "inLanguage": "cs", "dateModified": TODAY},
+      {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Pronájmy Západ", "item": DOMAIN + "/"}, {"@type": "ListItem", "position": 2, "name": "Nabídky", "item": url(path)}]},
+      {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": url(f"/nabidky/{l['slug']}/"), "name": l["title"]} for i, l in enumerate(LISTINGS)]}]
+    write(path, page(path, "Nabídky pronájmu bytů a domů v Karlovarském kraji | Pronájmy Západ",
+        "Aktuální nabídky pronájmu bytů a domů v Karlovarském kraji: Karlovy Vary, Cheb, Sokolov, Mariánské Lázně a okolí. Prohlídky domluvíme rychle.", body, graph))
+
+def listing_page(l):
+    path = f"/nabidky/{l['slug']}/"
+    ph = photos_of(l)
+    name, phone, tel = CONTACTS.get(l.get("contact") or "sona", CONTACTS["sona"])
+    where = l["city"] + (f' – {l["district"]}' if l.get("district") else "")
+    facts = [("Typ", l["type"]), ("Dispozice", l.get("disposition")), ("Plocha", f'{l["area_m2"]} m²' if l.get("area_m2") else None),
+             ("Podlaží", l.get("floor")), ("Lokalita", where), ("Vybavení", FURNISHED.get(l.get("furnished"))),
+             ("Energetická třída (PENB)", l.get("energy_class")), ("Dostupné od", short_date(l["available_from"]) if l.get("available_from") else "ihned / dle dohody")]
+    facts = "".join(f"<tr><th>{E(k)}</th><td>{E(str(v))}</td></tr>" for k, v in facts if v)
+    money = [("Nájemné", czk(l["rent_czk"]) + " / měsíc")]
+    if l.get("fees_czk"): money.append(("Zálohy na služby a energie", czk(l["fees_czk"]) + " / měsíc"))
+    if l.get("deposit_czk"): money.append(("Jistota (kauce)", czk(l["deposit_czk"])))
+    money = "".join(f"<tr><th>{E(k)}</th><td>{E(v)}</td></tr>" for k, v in money)
+    desc_paras = [x.strip() for x in (l.get("description") or "").split("\n\n") if x.strip()]
+    desc_html = "".join(f"<p>{E(x).replace(chr(10), '<br>')}</p>" for x in desc_paras)
+    feats = "".join(f"<li>{E(f)}</li>" for f in (l.get("features") or []))
+    gallery = ""
+    if ph:
+        thumbs = "".join(f'<a href="{E(x["url"])}" target="_blank" rel="noopener"><img src="{E(x["url"])}" alt="{E(x["alt"])}" loading="lazy" width="320" height="220"></a>' for x in ph[1:])
+        gallery = f'<div class="gal"><a class="main" href="{E(ph[0]["url"])}" target="_blank" rel="noopener"><img src="{E(ph[0]["url"])}" alt="{E(ph[0]["alt"])}" width="1200" height="800" fetchpriority="high"></a>{thumbs}</div>'
+    else:
+        gallery = f'<div class="gal"><div class="noimg big">{ICON["image"]}<span>Fotografie připravujeme</span></div></div>'
+    intro_bits = [l["type"] + (f' {l["disposition"]}' if l.get("disposition") else ""), where]
+    short = f'{" · ".join(intro_bits)}. Nájemné {czk(l["rent_czk"])} měsíčně.'
+    inquiry = f'''<form class="form" data-lead data-subject="Zájem o nabídku: {E(l["title"])}" data-endpoint="{E(FORM_ENDPOINT)}" novalidate>
+<h3>Mám zájem o prohlídku</h3><input type="hidden" name="nabidka" value="{E(l["title"])} ({E(url(path))})">
+<div class="row one"><div><label for="q-jmeno">Jméno a příjmení</label><input id="q-jmeno" name="jmeno" required autocomplete="name"></div></div>
+<div class="row"><div><label for="q-tel">Telefon</label><input id="q-tel" name="telefon" type="tel" required autocomplete="tel"></div><div><label for="q-email">E-mail</label><input id="q-email" name="email" type="email" required autocomplete="email"></div></div>
+<div class="row one"><div><label for="q-zprava">Zpráva</label><textarea id="q-zprava" name="zprava" placeholder="Např. kdy byste se mohli přijít podívat"></textarea></div></div>
+<div class="hp" aria-hidden="true"><label>Web<input name="web" tabindex="-1" autocomplete="off"></label></div>
+<label class="consent"><input type="checkbox" name="souhlas" required> <span>Souhlasím se zpracováním osobních údajů pro účely vyřízení poptávky. <a href="/ochrana-osobnich-udaju/">Více informací</a></span></label>
+<button class="btn" type="submit">Odeslat poptávku →</button><p class="msg" role="status" aria-live="polite"></p></form>'''
+    body = f'''<section style="padding:36px 0 84px"><div class="wrap">
+<p class="crumbs" style="color:var(--muted)"><a href="/">Pronájmy Západ</a> › <a href="/nabidky/">Nabídky</a> › {E(l["title"])}</p>
+<h1 style="font-size:clamp(1.8rem,3.6vw,2.7rem)">{E(l["title"])}</h1>
+<p style="color:var(--muted);font-size:1.05rem">{E(where)} · <b style="color:var(--navy)">{czk(l["rent_czk"])} / měsíc</b></p>
+{gallery}
+<div class="dgrid"><div>
+<h2 style="font-size:1.6rem">Popis nemovitosti</h2>{desc_html or f"<p>{E(short)}</p>"}
+{f'<h2 style="font-size:1.6rem;margin-top:1.4em">Vybavení a výhody</h2><ul class="tags">{feats}</ul>' if feats else ""}
+<h2 style="font-size:1.6rem;margin-top:1.4em">Parametry</h2><table class="facts-t">{facts}</table>
+<h2 style="font-size:1.6rem;margin-top:1.4em">Cena</h2><table class="facts-t">{money}</table>
+<p class="note" style="margin-top:22px">Přesnou adresu sdělíme při domluvě prohlídky. Zprostředkování pronájmu zajišťuje {E(CO["name"].rstrip("."))}.</p>
+</div><aside class="side"><div class="agent"><span class="eyebrow">Váš kontakt</span><b>{E(name)}</b>
+<a href="tel:{tel}">{phone}</a><a href="mailto:{CO["email"]}">{CO["email"]}</a><small>Po – Pá 9:00 – 17:00</small></div>{inquiry}</aside></div></div></section>'''
+    absimgs = [x["url"] for x in ph]
+    about = {"@type": SCHEMA_TYPE.get(l["type"], "Accommodation"), "name": l["title"],
+             "address": {"@type": "PostalAddress", "addressLocality": l["city"], "addressRegion": "Karlovarský kraj", "addressCountry": "CZ"}}
+    if l.get("area_m2"): about["floorSize"] = {"@type": "QuantitativeValue", "value": l["area_m2"], "unitCode": "MTK"}
+    if l.get("disposition"): about["description"] = f'Dispozice {l["disposition"]}'
+    offer = {"@type": "Offer", "price": l["rent_czk"], "priceCurrency": "CZK", "availability": "https://schema.org/InStock", "seller": {"@id": DOMAIN + "/#org"},
+             "priceSpecification": {"@type": "UnitPriceSpecification", "price": l["rent_czk"], "priceCurrency": "CZK", "unitCode": "MON", "unitText": "měsíc"}}
+    if l.get("available_from"): offer["availabilityStarts"] = l["available_from"][:10]
+    listing = {"@type": "RealEstateListing", "@id": url(path) + "#listing", "url": url(path), "name": l["title"],
+               "description": " ".join(desc_paras)[:500] or short, "inLanguage": "cs", "offers": offer, "about": about}
+    if l.get("published_at"): listing["datePosted"] = l["published_at"][:10]
+    if absimgs: listing["image"] = absimgs
+    graph = [ORG, listing,
+      {"@type": "WebPage", "@id": url(path) + "#webpage", "url": url(path), "name": l["title"], "isPartOf": {"@id": DOMAIN + "/#website"}, "inLanguage": "cs", "dateModified": (l.get("updated_at") or TODAY)[:10], "mainEntity": {"@id": url(path) + "#listing"}},
+      {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Pronájmy Západ", "item": DOMAIN + "/"}, {"@type": "ListItem", "position": 2, "name": "Nabídky", "item": url("/nabidky/")}, {"@type": "ListItem", "position": 3, "name": l["title"], "item": url(path)}]}]
+    desc = f'{short} {desc_paras[0][:120] if desc_paras else ""}'.strip()
+    h = page(path, f'{l["title"]} | Pronájem {l["city"]}', desc[:300], body, graph)
+    if absimgs: h = h.replace(f'<meta property="og:image" content="{DOMAIN}/assets/og.png">', f'<meta property="og:image" content="{E(absimgs[0])}">')
+    write(path, h)
+
+def admin_config():
+    d = OUT / "admin"; d.mkdir(parents=True, exist_ok=True)
+    (d / "config.js").write_text("window.PZ_CONFIG = " + json.dumps({"url": SUPABASE_URL, "anonKey": SUPABASE_ANON_KEY}) + ";\n", encoding="utf-8")
+
+def slugify(t):
+    t = unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", t).strip("-")
 
 if __name__ == "__main__":
-    home(); place_pages(); privacy(); not_found(); static_files()
-    print("hotovo")
+    if OUT.exists(): shutil.rmtree(OUT)
+    shutil.copytree(STATIC, OUT)
+    LISTINGS = load_listings()
+    for l in LISTINGS:
+        l["slug"] = slugify(l["slug"]) or slugify(l["title"])
+    home(); place_pages(); privacy(); not_found(); listings_page()
+    for l in LISTINGS: listing_page(l)
+    static_files(); admin_config()
+    print(f"hotovo, nabídek: {len(LISTINGS)}")
+
