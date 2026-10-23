@@ -11,12 +11,12 @@
       if(f.querySelector('[name=web]').value){return}            // honeypot
       if(!f.checkValidity()){f.reportValidity();return}
       var d={};new FormData(f).forEach(function(v,k){if(k!=='web')d[k]=v});
-      d.zdroj=location.pathname;
+      d.zdroj=location.pathname;d.odeslano=new Date().toISOString();
       var ep=f.getAttribute('data-endpoint');
       if(ep){
         var btn=f.querySelector('button[type=submit]');btn.disabled=true;
         fetch(ep,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(d)})
-          .then(function(r){if(!r.ok)throw 0;f.reset();show('Děkujeme, nabídku jsme přijali. Ozveme se vám co nejdříve.','ok')})
+          .then(function(r){if(!r.ok)throw 0;f.reset();show(f.getAttribute('data-success')||'Děkujeme, nabídku jsme přijali. Ozveme se vám co nejdříve.','ok')})
           .catch(function(){show('Odeslání se nepovedlo. Zavolejte prosím na 603 382 392 nebo napište na alfaestate@alfaestate.cz.','err')})
           .then(function(){btn.disabled=false});
       }else{

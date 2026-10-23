@@ -2,7 +2,7 @@
 create table if not exists public.listings (
   id            uuid primary key,
   slug          text unique not null,
-  status        text not null default 'draft' check (status in ('draft','published','archived')),
+  status        text not null default 'draft' check (status in ('draft','published','rented','archived')),
   title         text not null,
   type          text not null,                -- Byt, Rodinný dům, ...
   disposition   text,                         -- 2+kk, 3+1, ...
@@ -22,6 +22,7 @@ create table if not exists public.listings (
   photos        jsonb  not null default '[]', -- [{"path":"<id>/x.jpg","alt":"..."}]
   contact       text not null default 'sona', -- sona | vit
   published_at  timestamptz,
+  rented_at     date,                         -- kdy byla nemovitost pronajata (Realizované obchody)
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -34,10 +35,10 @@ create trigger listings_touch before update on public.listings
 
 alter table public.listings enable row level security;
 
--- Veřejnost (web při buildu) vidí jen zveřejněné nabídky.
+-- Veřejnost (web při buildu) vidí nabídky k pronájmu a pronajaté (Realizované obchody).
 drop policy if exists "public read published" on public.listings;
 create policy "public read published" on public.listings
-  for select to anon using (status = 'published');
+  for select to anon using (status in ('published','rented'));
 
 -- Přihlášení správci (účty vytváříte ručně, registrace je vypnutá) mohou vše.
 drop policy if exists "admins all" on public.listings;

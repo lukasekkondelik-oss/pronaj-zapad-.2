@@ -27,9 +27,14 @@ Vercel funguje stejně (`vercel.json`, Environment Variables, **Deploy Hooks**).
 Supabase → **Database → Webhooks → Create**: tabulka `listings`, události Insert + Update + Delete,
 typ HTTP Request, metoda POST, URL = build hook z Netlify. Po každém uložení v adminu se web do 1–2 minut přegeneruje.
 
+## 3b. Pokud jste už dřív spustili schema.sql
+Spusťte jednorázově `supabase/migration_rented.sql` (přidá stav „Pronajato“ a datum pronájmu).
+
 ## 4. Každodenní práce
 Otevřete `https://VAŠE-DOMÉNA/admin/`, přihlaste se, **+ Nová nabídka**, vyplňte, nahrajte fotky, stav „Zveřejněno“, Uložit.
-Stav „Koncept“ nabídku na webu skryje, „Archiv“ také (např. pronajato). Smazání odstraní i fotky.
+Stavy: **K pronájmu** (veřejná nabídka), **Pronajato** (přesune se do části „Realizované obchody“ na `/nabidky/`, detail zůstává pro SEO a ukazuje, že je pronajato), **Koncept** a **Archiv** (na webu se nezobrazují). V seznamu je tlačítko „Označit jako pronajato“ / „Vrátit k pronájmu“. Smazání odstraní i fotky.
+
+Zpracování poptávek a automatické e-maily: viz `docs/MAKE.md`.
 
 ## Lokální náhled
 ```

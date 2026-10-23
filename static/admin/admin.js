@@ -6,7 +6,7 @@
   var DISPS = ['', 'Garsonka', '1+kk', '1+1', '2+kk', '2+1', '3+kk', '3+1', '4+kk', '4+1', '5+kk a větší'];
   var CITIES = ['Karlovy Vary', 'Cheb', 'Sokolov', 'Mariánské Lázně', 'Ostrov'];
   var FEATS = ['Balkon', 'Lodžie', 'Terasa', 'Zahrada', 'Garáž', 'Parkování', 'Sklep', 'Výtah', 'Klimatizace', 'Internet', 'Domácí mazlíčci povoleni', 'Bezbariérový přístup'];
-  var STATUS = { draft: 'Koncept', published: 'Zveřejněno', archived: 'Archiv' };
+  var STATUS = { draft: 'Koncept', published: 'K pronájmu', rented: 'Pronajato', archived: 'Archiv' };
 
   if (!C.url || !C.anonKey) {
     app.innerHTML = '<div class="box login"><h2>Chybí konfigurace</h2><p>Při buildu nejsou nastavené proměnné <code>SUPABASE_URL</code> a <code>SUPABASE_ANON_KEY</code>. Viz docs/SETUP.md.</p></div>';
@@ -67,7 +67,7 @@
   // ---------- seznam ----------
   function listView() {
     app.replaceChildren(h('p', { text: 'Načítám nabídky…', style: 'padding:30px 0' }));
-    sb.from('listings').select('id,title,city,rent_czk,status,photos,updated_at,slug').order('updated_at', { ascending: false }).then(function (r) {
+    sb.from('listings').select('id,title,city,rent_czk,status,photos,updated_at,slug,rented_at').order('updated_at', { ascending: false }).then(function (r) {
       if (r.error) { toast('Chyba načtení: ' + r.error.message); return; }
       var rows = (r.data || []).map(function (l) {
         var ph = (l.photos || [])[0];
@@ -77,15 +77,26 @@
           h('td', { class: 'hm', text: l.city }),
           h('td', { text: l.rent_czk.toLocaleString('cs-CZ') + ' Kč' }),
           h('td', {}, [h('span', { class: 'badge b-' + l.status, text: STATUS[l.status] || l.status })]),
-          h('td', {}, [h('button', { class: 'btn sm out', text: 'Upravit', onclick: function () { editView(l.id); } })])
+          h('td', { style: 'white-space:nowrap' }, [h('button', { class: 'btn sm out', text: 'Upravit', onclick: function () { editView(l.id); } })].concat(
+            l.status === 'published' ? [h('button', { class: 'btn sm', style: 'margin-left:6px', text: 'Označit jako pronajato', onclick: function () { setStatus(l, 'rented'); } })] :
+            l.status === 'rented' ? [h('button', { class: 'btn sm out', style: 'margin-left:6px', text: 'Vrátit k pronájmu', onclick: function () { setStatus(l, 'published'); } })] : []))
         ]);
       });
       var tbl = h('table', { class: 'l' }, [h('thead', {}, [h('tr', {}, ['', 'Nabídka', 'Město', 'Nájemné', 'Stav', ''].map(function (t, i) { return h('th', { text: t, class: i === 2 ? 'hm' : '' }); }))]), h('tbody', {}, rows)]);
       app.replaceChildren(h('div', { class: 'box' }, [
         h('div', { class: 'actions', style: 'margin:0 0 18px;justify-content:space-between' }, [h('h2', { text: 'Nabídky', style: 'margin:0' }), h('button', { class: 'btn', text: '+ Nová nabídka', onclick: function () { editView(null); } })]),
         rows.length ? tbl : h('p', { text: 'Zatím tu nic není. Přidejte první nabídku.' }),
-        h('p', { class: 'hint', text: 'Po každé změně se web sám přegeneruje, obvykle do 1–2 minut. Zveřejněné jsou jen nabídky ve stavu „Zveřejněno“.' })
+        h('p', { class: 'hint', text: 'Po každé změně se web sám přegeneruje, obvykle do 1–2 minut. Na webu jsou nabídky ve stavu „K pronájmu“ a v části „Realizované obchody“ nabídky ve stavu „Pronajato“.' })
       ]));
+    });
+  }
+
+  function setStatus(l, st) {
+    var msg = st === 'rented' ? 'Označit „' + l.title + '“ jako pronajatou? Přesune se mezi Realizované obchody.' : 'Vrátit „' + l.title + '“ zpět k pronájmu?';
+    if (!confirm(msg)) return;
+    sb.from('listings').update({ status: st, rented_at: st === 'rented' ? new Date().toISOString().slice(0, 10) : null }).eq('id', l.id).then(function (r) {
+      if (r.error) { toast('Změna stavu selhala: ' + r.error.message, 8000); return; }
+      toast('Stav změněn. Web se přegeneruje během 1–2 minut.', 7000); listView();
     });
   }
 
@@ -99,7 +110,7 @@
       var form = h('form', { class: 'box' });
       var F = {};
       F.title = inp('title', l.title, { required: true, maxlength: 120, placeholder: 'Např. Světlý byt 2+kk s balkonem v Drahovicích' });
-      F.status = sel('status', ['draft', 'published', 'archived'], l.status); [].forEach.call(F.status.options, function (o) { o.textContent = STATUS[o.value]; });
+      F.status = sel('status', ['draft', 'published', 'rented', 'archived'], l.status); [].forEach.call(F.status.options, function (o) { o.textContent = STATUS[o.value]; });
       F.type = sel('type', TYPES, l.type);
       F.disposition = sel('disposition', DISPS, l.disposition || '');
       F.city = inp('city', l.city, { required: true, list: 'cities' });
@@ -110,6 +121,7 @@
       F.fees = inp('fees_czk', l.fees_czk, { inputmode: 'numeric' });
       F.deposit = inp('deposit_czk', l.deposit_czk, { inputmode: 'numeric' });
       F.avail = inp('available_from', l.available_from, { type: 'date' });
+      F.rentedAt = inp('rented_at', l.rented_at, { type: 'date' });
       F.furn = sel('furnished', ['', 'ano', 'castecne', 'ne'], l.furnished || ''); [].forEach.call(F.furn.options, function (o) { o.textContent = { '': '—', ano: 'Zařízeno', castecne: 'Částečně zařízeno', ne: 'Nezařízeno' }[o.value]; });
       F.energy = sel('energy_class', ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G'], l.energy_class || '');
       F.contact = sel('contact', ['sona', 'vit'], l.contact || 'sona'); [].forEach.call(F.contact.options, function (o) { o.textContent = o.value === 'sona' ? 'Soňa Petříková (603 382 392)' : 'Vít Čirik (776 686 776)'; });
@@ -155,12 +167,14 @@
         var feats = [].filter.call(chips.querySelectorAll('input'), function (c) { return c.checked; }).map(function (c) { return c.value; })
           .concat(F.extra.value.split(',').map(function (x) { return x.trim(); }).filter(Boolean));
         if (F.status.value === 'published' && !photos.length && !confirm('Nabídka nemá žádné fotografie. Opravdu zveřejnit?')) return;
+        var today = new Date().toISOString().slice(0, 10);
         var row = {
           id: l.id, title: F.title.value.trim(), status: F.status.value, type: F.type.value, disposition: F.disposition.value || null,
           city: F.city.value.trim(), district: F.district.value.trim() || null, street: F.street.value.trim() || null,
           area_m2: num(F.area.value), floor: F.floor.value.trim() || null, rent_czk: num(F.rent.value), fees_czk: num(F.fees.value), deposit_czk: num(F.deposit.value),
           available_from: F.avail.value || null, furnished: F.furn.value || null, energy_class: F.energy.value || null,
-          description: F.desc.value.trim() || null, features: feats, photos: photos, contact: F.contact.value
+          description: F.desc.value.trim() || null, features: feats, photos: photos, contact: F.contact.value,
+          rented_at: F.status.value === 'rented' ? (F.rentedAt.value || today) : null
         };
         if (row.rent_czk == null) { toast('Vyplňte nájemné.'); return; }
         row.slug = l.slug || (slugify(row.title + ' ' + row.city) + '-' + l.id.slice(0, 6));
@@ -183,12 +197,13 @@
         });
       } });
       [h('h2', { text: isNew ? 'Nová nabídka' : 'Úprava nabídky', style: 'margin-bottom:18px' }),
-        h('div', { class: 'g2' }, [fld('Nadpis nabídky', F.title), fld('Stav', F.status, 'Na webu jsou jen nabídky ve stavu „Zveřejněno“.')]),
+        h('div', { class: 'g2' }, [fld('Nadpis nabídky', F.title), fld('Stav', F.status, 'K pronájmu = veřejná nabídka. Pronajato = přesune se do „Realizovaných obchodů“. Koncept a Archiv se na webu nezobrazují.')]),
         h('div', { class: 'g3' }, [fld('Typ nemovitosti', F.type), fld('Dispozice', F.disposition), fld('Plocha (m²)', F.area)]),
         h('div', { class: 'g3' }, [fld('Město', F.city), fld('Městská část / čtvrť', F.district), fld('Podlaží', F.floor)]),
         h('div', { class: 'g3' }, [fld('Nájemné (Kč / měsíc)', F.rent), fld('Zálohy na služby (Kč / měsíc)', F.fees), fld('Jistota / kauce (Kč)', F.deposit)]),
         h('div', { class: 'g3' }, [fld('Dostupné od', F.avail, 'Prázdné = ihned / dle dohody'), fld('Vybavení bytem', F.furn), fld('Energetická třída (PENB)', F.energy)]),
         h('div', { class: 'g2' }, [fld('Kontaktní osoba', F.contact), fld('Ulice (interní)', F.street)]),
+        h('div', { class: 'g2' }, [fld('Pronajato dne', F.rentedAt, 'Vyplní se samo při přepnutí na „Pronajato“.'), h('div')]),
         fld('Popis', F.desc), h('label', { text: 'Vybavení a výhody', style: 'margin-top:14px' }), chips, F.extra, dl,
         h('label', { text: 'Fotografie', style: 'margin-top:18px' }), h('p', { class: 'hint', text: 'První fotka je titulní. Fotky se při nahrání automaticky zmenší.' }), grid, fileIn,
         h('div', { class: 'actions' }, [h('button', { class: 'btn', type: 'submit', text: 'Uložit' }), h('button', { class: 'btn out', type: 'button', text: 'Zpět', onclick: listView })].concat(del ? [del] : []))
