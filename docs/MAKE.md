@@ -13,30 +13,24 @@ Společná pole: `formular` (`majitel` | `zajemce`), `jmeno`, `telefon`, `email`
 
 Pole `web` je honeypot proti spamu: web ho při vyplnění neodešle vůbec, v Make přesto ponechte filtr „web je prázdné“.
 
-## Scénář v Make (navržený)
+## Scénář v Make (dohodnutý rozsah)
+Poptávky se ukládají **jen do Google Sheets** a chodí e-mailem. Žádné CRM, žádné úkoly, žádné připomínky.
+
 1. **Webhooks → Custom webhook** (datová struktura podle tabulky výše, zapněte validaci).
 2. **Filtr**: `souhlas` je vyplněné a `email` je platný e-mail.
-3. **Uložení poptávky**: Google Sheets / Airtable / CRM. Ukládejte i `souhlas` a `odeslano` (doklad souhlasu pro GDPR).
-4. **Router** podle `formular`:
-   - **majitel**
-     - interní e-mail na alfaestate@alfaestate.cz s přehledem nemovitosti,
-     - potvrzovací e-mail odesílateli,
-     - úkol / upozornění pro obchodníka (ClickUp, Slack nebo e-mail).
-   - **zajemce**
-     - interní e-mail kontaktní osobě podle `kontakt` (Soňa 603 382 392 / Vít 776 686 776) s odkazem `nabidka_url`,
-     - potvrzovací e-mail zájemci,
-     - záznam v tabulce poptávek u dané nabídky.
-5. **Volitelně:** připomenutí obchodníkovi, pokud poptávka není do 24 h označená jako vyřízená.
-6. **Ošetření chyb:** na chybu v kterémkoli kroku nastavte upozornění (jinak se poptávka může ztratit).
+3. **Google Sheets → Add a Row**: `odeslano`, `formular`, `jmeno`, `telefon`, `email`, `souhlas`, `zdroj`, nemovitost nebo nabídka a zpráva (jeden list, sloupce podle polí). Sloupce `souhlas` a `odeslano` jsou doklad souhlasu pro GDPR.
+4. **E-mail týmu: „Nová poptávka“** na alfaestate@alfaestate.cz. U `zajemce` navíc kopie kontaktní osobě podle `kontakt` (Soňa / Vít).
+5. **Informační e-mail odesílateli** (potvrzení, že poptávku přijali). Text podle `formular`, viz níže.
+6. **Ošetření chyb:** na chybu v kterémkoli kroku nastavte upozornění e-mailem, jinak se poptávka může ztratit.
 
 ## Texty automatických e-mailů (návrh)
-**Majiteli (potvrzení)**: *Předmět:* Děkujeme za vaši nabídku nemovitosti
+**Majiteli (informační e-mail)**: *Předmět:* Děkujeme za vaši nabídku nemovitosti
 > Dobrý den {{jmeno}}, děkujeme, že jste nám poslal(a) nabídku nemovitosti ({{typ}}, {{mesto}}). Ozveme se vám nejpozději v nejbližší pracovní den (Po–Pá 9:00–17:00). Pokud je to naléhavé, zavolejte na 603 382 392. ALFA ESTATE V&S Partners s.r.o.
 
-**Zájemci (potvrzení)**: *Předmět:* Poptávka prohlídky: {{nabidka}}
+**Zájemci (informační e-mail)**: *Předmět:* Poptávka prohlídky: {{nabidka}}
 > Dobrý den {{jmeno}}, děkujeme za zájem o nabídku „{{nabidka}}“ ({{nabidka_url}}). Brzy se vám ozveme a domluvíme prohlídku. Kontaktní osoba: {{kontakt jméno + telefon}}.
 
-**Interní upozornění**: předmět `[Web] Nový majitel: {{mesto}}, {{typ}}` nebo `[Web] Zájem o prohlídku: {{nabidka}}`; tělo = všechna pole formuláře + telefon a e-mail na jedno kliknutí.
+**E-mail týmu „Nová poptávka“**: předmět `Nová poptávka: majitel, {{mesto}}, {{typ}}` nebo `Nová poptávka: prohlídka, {{nabidka}}`; tělo = všechna pole formuláře + telefon a e-mail na jedno kliknutí.
 
 ## Co zajistit mimo Make
 - **Odesílání z domény alfaestate.cz**: nastavte SPF, DKIM a DMARC, jinak budou e-maily padat do spamu. Odesílejte přes Gmail / Microsoft 365 modul nebo SMTP firmy.
