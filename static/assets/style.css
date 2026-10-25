@@ -212,3 +212,5 @@ details p{padding:0 22px 20px;margin:0;color:var(--muted)}
 .lcard.done .lprice{color:var(--muted)}
 .done-banner{display:inline-block;background:var(--navy);color:var(--gold-l);font:700 .78rem var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:6px 14px;border-radius:999px;margin:0 0 12px}
 .done-box p{color:var(--muted)}
+.lcard.static{cursor:default}
+.lcard.static:hover{transform:none;box-shadow:none;border-color:var(--line)}

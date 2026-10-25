@@ -2,7 +2,6 @@
  {
   "id": "00000000-0000-4000-8000-000000000001",
   "slug": "2kk-karlovy-vary-drahovice-ukazka",
-  "status": "published",
   "title": "Světlý byt 2+kk s balkonem v Drahovicích",
   "type": "Byt",
   "disposition": "2+kk",
@@ -24,14 +23,14 @@
    "Internet"
   ],
   "photos": [],
-  "contact": "sona",
   "published_at": "2026-10-20T08:00:00Z",
-  "updated_at": "2026-10-20T08:00:00Z"
+  "updated_at": "2026-10-20T08:00:00Z",
+  "contact_name": "Soňa Petříková",
+  "contact_phone": "603 382 392"
  },
  {
   "id": "00000000-0000-4000-8000-000000000002",
   "slug": "rodinny-dum-cheb-ukazka",
-  "status": "published",
   "title": "Rodinný dům 4+1 se zahradou u Chebu",
   "type": "Rodinný dům",
   "disposition": "4+1",
@@ -52,35 +51,9 @@
    "Parkování"
   ],
   "photos": [],
-  "contact": "vit",
   "published_at": "2026-10-18T08:00:00Z",
-  "updated_at": "2026-10-18T08:00:00Z"
- },
- {
-  "id": "00000000-0000-4000-8000-000000000003",
-  "slug": "1kk-ostrov-ukazka",
-  "status": "rented",
-  "title": "Zrekonstruovaný byt 1+kk v Ostrově",
-  "type": "Byt",
-  "disposition": "1+kk",
-  "city": "Ostrov",
-  "district": "",
-  "area_m2": 32,
-  "floor": "2. patro",
-  "rent_czk": 9500,
-  "fees_czk": 2100,
-  "deposit_czk": 19000,
-  "available_from": null,
-  "furnished": "ano",
-  "energy_class": "D",
-  "description": "UKÁZKOVÝ INZERÁT pro test šablony.",
-  "features": [
-   "Zařízeno"
-  ],
-  "photos": [],
-  "contact": "sona",
-  "published_at": "2026-09-01T08:00:00Z",
-  "rented_at": "2026-10-10",
-  "updated_at": "2026-10-10T08:00:00Z"
+  "updated_at": "2026-10-18T08:00:00Z",
+  "contact_name": "Vít Čirik",
+  "contact_phone": "776 686 776"
  }
 ]

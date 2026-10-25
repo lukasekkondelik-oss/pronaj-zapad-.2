@@ -4,12 +4,12 @@ Web posílá každý odeslaný formulář jako JSON metodou POST na jedinou adre
 tedy na **Custom webhook** v Make. Make poptávku zpracuje, uloží, rozešle e-maily a upozorní tým.
 
 ## Datový formát (webhook)
-Společná pole: `formular` (`majitel` | `zajemce`), `jmeno`, `telefon`, `email`, `souhlas`, `zdroj` (cesta stránky), `odeslano` (ISO čas).
+Společná pole: `projekt` (identifikátor webu, tady `pronajemzapad`, aby šel scénář použít i pro další weby), `formular` (`majitel` | `zajemce`), `jmeno`, `telefon`, `email`, `souhlas`, `zdroj` (cesta stránky), `odeslano` (ISO čas).
 
 | `formular` | Odkud | Další pole |
 |---|---|---|
 | `majitel` | úvodní stránka, stránky měst | `typ`, `dispozice`, `mesto`, `od`, `plocha`, `najemne`, `popis`, `pomoc` |
-| `zajemce` | detail nabídky | `nabidka_id`, `nabidka`, `nabidka_url`, `kontakt` (`sona` / `vit`), `zprava` |
+| `zajemce` | detail nabídky | `nabidka_id` (ID ze Softrealu), `nabidka`, `nabidka_url`, `kontakt` (jméno makléře), `zprava` |
 
 Pole `web` je honeypot proti spamu: web ho při vyplnění neodešle vůbec, v Make přesto ponechte filtr „web je prázdné“.
 
@@ -19,7 +19,7 @@ Poptávky se ukládají **jen do Google Sheets** a chodí e-mailem. Žádné CRM
 1. **Webhooks → Custom webhook** (datová struktura podle tabulky výše, zapněte validaci).
 2. **Filtr**: `souhlas` je vyplněné a `email` je platný e-mail.
 3. **Google Sheets → Add a Row**: `odeslano`, `formular`, `jmeno`, `telefon`, `email`, `souhlas`, `zdroj`, nemovitost nebo nabídka a zpráva (jeden list, sloupce podle polí). Sloupce `souhlas` a `odeslano` jsou doklad souhlasu pro GDPR.
-4. **E-mail týmu: „Nová poptávka“** na alfaestate@alfaestate.cz. U `zajemce` navíc kopie kontaktní osobě podle `kontakt` (Soňa / Vít).
+4. **E-mail týmu: „Nová poptávka“** na alfaestate@alfaestate.cz. U `zajemce` navíc kopie makléři podle `kontakt`.
 5. **Informační e-mail odesílateli** (potvrzení, že poptávku přijali). Text podle `formular`, viz níže.
 6. **Ošetření chyb:** na chybu v kterémkoli kroku nastavte upozornění e-mailem, jinak se poptávka může ztratit.
 
@@ -39,3 +39,7 @@ Poptávky se ukládají **jen do Google Sheets** a chodí e-mailem. Žádné CRM
 
 ## Nastavení webu
 V `tools/build.py` nastavte `FORM_ENDPOINT = "https://hook.eu2.make.com/…"` (URL z modulu Custom webhook) a znovu nasaďte.
+
+## Další scénáře (finální nabídka)
+- **Pravidelná kontrola Softrealu:** každých 30 minut stáhnout export, porovnat otisk (hash) s minulým během a při změně zavolat Netlify build hook. Díky tomu stažená nabídka zmizí i z webu. Doplňte až po ověření exportu (`docs/SOFTREAL.md`).
+- **Podklady od majitele (formulář s fotkami):** zapíše se do administrace podkladů a do Make dorazí jen upozornění s odkazem. Makléřce přijde e-mail, majiteli potvrzení. Doplní se ve fázi 3.
