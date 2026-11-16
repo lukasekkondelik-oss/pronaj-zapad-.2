@@ -538,7 +538,7 @@ if __name__ == "__main__":
     try:
         LISTINGS = load_listings()
     except (softreal.FeedError, NotImplementedError) as e:
-        sys.exit(f"CHYBA: {e}\nBuild zastaven, Netlify ponechá předchozí funkční verzi webu.")
+        sys.exit(f"CHYBA: {e}\nBuild zastaven, Vercel ponechá předchozí funkční verzi webu.")
     REFERENCES = load_references()
     home(); place_pages(); privacy(); not_found(); listings_page()
     for l in LISTINGS: listing_page(l)

@@ -3,15 +3,17 @@
 Web je statický. `tools/build.py` při každém buildu stáhne nabídky ze Softrealu a vygeneruje stránky do `dist/`.
 Zdroje: `static/` (CSS, JS, obrázky), `data/references.json` (Realizované obchody), `tools/` (generátor).
 
-## Netlify
-1. Importujte repozitář. Nastavení načte `netlify.toml` (build `python3 tools/build.py`, publish `dist`, Python 3.11).
-2. **Environment variables:**
+## Vercel
+1. Importujte repozitář jako nový projekt. Nastavení načte `vercel.json` (framework žádný, build `python3 tools/build.py`, výstup `dist`).
+2. **Settings → Environment Variables:**
    - `SOFTREAL_FEED_URL`, `SOFTREAL_TOKEN` (až budou známé, viz `docs/SOFTREAL.md`),
    - `ALLOW_EMPTY=1` jen pokud je prázdný seznam nabídek záměr.
-3. **Build hooks → Add build hook**: URL se použije v Make pro pravidelné přegenerování (viz `docs/MAKE.md`).
-4. V `tools/build.py` nastavte `DOMAIN` (skutečná doména) a `FORM_ENDPOINT` (adresa webhooku v Make).
+3. **Settings → Git → Deploy Hooks → Create Hook** (větev, ze které se staví): URL se použije v Make pro pravidelné přegenerování (viz `docs/MAKE.md`).
+4. **Production Branch:** nastavte větev, ze které má běžet ostrý web. Ostatní větve dostanou náhledovou adresu (preview).
+5. V `tools/build.py` nastavte `DOMAIN` (skutečná doména) a `FORM_ENDPOINT` (adresa webhooku v Make).
+6. **Plán:** bezplatný plán Hobby je podle podmínek Vercelu jen pro nekomerční použití. Web klienta patří na plán Pro, nebo na účet klienta.
 
-Vercel funguje obdobně (`vercel.json`, Deploy Hooks). Pozor: kód musí zůstat kompatibilní s Pythonem 3.11.
+Při selhání buildu (nedostupný Softreal, prázdný export) zůstává nasazená předchozí funkční verze.
 
 ## Realizované obchody
 Upravte `data/references.json` (až 6 položek), fotky dejte do `static/references/`:
@@ -27,4 +29,4 @@ python3 -m http.server -d dist 8000
 ```
 
 ## Co teprve přijde
-Formulář majitele s fotkami a administrace podkladů (Supabase, neveřejné úložiště, stavy, mazání po 90 dnech).
+Formulář majitele s fotkami a administrace podkladů (Supabase, neveřejné úložiště, serverová funkce na Vercelu, stavy, mazání po 90 dnech).

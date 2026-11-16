@@ -41,5 +41,5 @@ Poptávky se ukládají **jen do Google Sheets** a chodí e-mailem. Žádné CRM
 V `tools/build.py` nastavte `FORM_ENDPOINT = "https://hook.eu2.make.com/…"` (URL z modulu Custom webhook) a znovu nasaďte.
 
 ## Další scénáře (finální nabídka)
-- **Pravidelná kontrola Softrealu:** každých 30 minut stáhnout export, porovnat otisk (hash) s minulým během a při změně zavolat Netlify build hook. Díky tomu stažená nabídka zmizí i z webu. Doplňte až po ověření exportu (`docs/SOFTREAL.md`).
+- **Pravidelná kontrola Softrealu:** každých 30 minut stáhnout export, porovnat otisk (hash) s minulým během a při změně zavolat Vercel Deploy Hook. Díky tomu stažená nabídka zmizí i z webu. Doplňte až po ověření exportu (`docs/SOFTREAL.md`).
 - **Podklady od majitele (formulář s fotkami):** zapíše se do administrace podkladů a do Make dorazí jen upozornění s odkazem. Makléřce přijde e-mail, majiteli potvrzení. Doplní se ve fázi 3.
