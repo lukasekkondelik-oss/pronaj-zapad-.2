@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="cs"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Podklady od majitelů | Pronájmy Západ</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/style.css">
+<style>
+body{background:var(--cream)}
+.top{background:var(--navy);color:#fff;padding:14px 0}.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.top b{font:500 1.15rem var(--serif);letter-spacing:.05em;text-transform:uppercase}
+.box{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:26px;margin:28px 0}
+.login{max-width:420px;margin:60px auto}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;cursor:pointer;font:inherit;font-size:.9rem}
+.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+table.l{width:100%;border-collapse:collapse;font-size:.95rem}
+table.l th,table.l td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+table.l tbody tr{cursor:pointer}table.l tbody tr:hover{background:var(--cream)}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:600}
+.b-nova{background:#e4e9f3;color:#2a4a86}.b-v_reseni{background:#fff3d6;color:#8a6200}.b-prevzato{background:#e6f3ec;color:var(--ok)}.b-zamitnuto{background:#eee;color:#666}
+.warn{background:#fbe9e7;color:var(--err)}
+dl{display:grid;grid-template-columns:200px 1fr;gap:8px 18px;margin:0}dt{color:var(--muted)}dd{margin:0;font-weight:600;color:var(--navy)}
+.ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:14px 0}
+.ph a{display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--cream-2)}
+.ph img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.btn.out{background:#fff;border:1px solid var(--line);color:var(--navy)}.btn.danger{background:#fff;border:1px solid #e0b4b0;color:var(--err)}
+.hint{color:var(--muted);font-size:.85rem}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;display:none;z-index:99;max-width:90vw}
+@media(max-width:720px){dl{grid-template-columns:1fr}table.l .hm{display:none}}
+</style></head><body>
+<div class="top"><div class="wrap"><b>Pronájmy Západ · Podklady od majitelů</b><span id="who"></span></div></div>
+<main class="wrap" id="app"><p style="padding:40px 0">Načítám…</p></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="/admin/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/admin/admin.js"></script>
+</body></html>

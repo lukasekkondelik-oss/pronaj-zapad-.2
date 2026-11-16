@@ -35,5 +35,50 @@ USE_SAMPLE=1 python3 tools/build.py      # ukázkové nabídky a reference
 python3 -m http.server -d dist 8000
 ```
 
-## Co teprve přijde
-Formulář majitele s fotkami a administrace podkladů (Supabase, neveřejné úložiště, serverová funkce na Vercelu, stavy, mazání po 90 dnech).
+## Formulář majitele s fotkami a administrace podkladů
+
+### Jak to funguje
+1. Majitel vyplní formulář a přidá fotky. V prohlížeči se zmenší na max. 1600 px (JPEG).
+2. Funkce `api/podklady.js` (logika v `lib/core.js`) ověří antispam (Cloudflare Turnstile, honeypot, časová past, limit 5 odeslání za hodinu z jedné IP), uloží údaje do Supabase a přijme fotky jednu po druhé (kontroluje, že jde opravdu o JPEG do 2 MB).
+3. Po dokončení pošle upozornění do Make (e-mail makléřce s odkazem na podklady, potvrzení majiteli, řádek v Google Sheets). Když Make nefunguje, podklady se uloží stejně a v administraci svítí „e-mail neodešel“.
+4. Makléřka podklady zpracuje v `/admin/` (stavy Nová / V řešení / Převzato / Zamítnuto, poznámka, stažení fotek v ZIP).
+5. Denní cron `api/cleanup.js` maže: nedokončené po 1 dni, Nová a V řešení po 90 dnech, Zamítnuto po 30 dnech od poslední změny stavu. **Převzato se nemaže.** Lhůty jsou v `RETENTION_DAYS` v `lib/core.js` (a pro zobrazení v `static/admin/admin.js`).
+
+### Nastavení Supabase (jednorázově)
+1. Projekt v regionu EU. V **SQL Editoru** spusťte celý `supabase/schema.sql`.
+2. **Authentication → Providers → Email**: vypněte *Allow new users to sign up*.
+3. **Authentication → Users → Add user**: účty pro makléřku a pro vás (e-mail + heslo, Auto Confirm).
+4. **Project Settings → API**: `Project URL`, `anon public` klíč a `service_role` klíč.
+   **`service_role` klíč patří jen do proměnných prostředí na serveru, nikdy do kódu ani do prohlížeče.**
+
+### Cloudflare Turnstile
+Dashboard → Turnstile → Add site (doména webu). Získáte *Site Key* (veřejný) a *Secret Key*.
+
+### Proměnné prostředí (Vercel → Settings → Environment Variables)
+| Proměnná | Kde se používá | Poznámka |
+|---|---|---|
+| `SUPABASE_URL` | build + funkce | adresa projektu |
+| `SUPABASE_ANON_KEY` | build (administrace) | veřejný klíč |
+| `SUPABASE_SERVICE_KEY` | jen funkce | **tajný** |
+| `TURNSTILE_SITE_KEY` | build (formulář) | veřejný |
+| `TURNSTILE_SECRET` | jen funkce | tajný, bez něj funkce odmítne vše |
+| `MAKE_WEBHOOK_URL` | jen funkce | adresa Custom webhooku v Make |
+| `IP_SALT` | jen funkce | libovolný dlouhý náhodný řetězec |
+| `CRON_SECRET` | jen funkce | libovolný dlouhý náhodný řetězec, Vercel ho posílá cronu automaticky |
+| `PUBLIC_URL` | jen funkce | např. `https://pronajemzapad.cz` (odkaz v e-mailu) |
+
+Po změně proměnných pro build je potřeba nové nasazení.
+
+### Ověření po prvním nasazení
+```
+curl -i -X POST https://VAŠE-DOMÉNA/api/podklady -H 'Content-Type: application/json' -d '{}'
+```
+Očekává se odpověď `400` nebo `422` s JSON (ne `404` ani přesměrování). Web používá adresy s lomítkem na konci,
+takže je třeba ověřit, že tím není dotčena adresa funkce. Dále: odeslat zkušební formulář s fotkou, zkontrolovat řádek
+v Supabase, e-mail z Make a zobrazení v `/admin/`.
+
+### Testy serverové části
+```
+node --test tests/api.test.js
+```
+Používají mock Supabase, Make i Turnstile (`tests/mock-supabase.js`), nepotřebují internet.

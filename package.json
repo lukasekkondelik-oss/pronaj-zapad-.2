@@ -1,0 +1,11 @@
+{
+  "name": "pronajmy-zapad",
+  "private": true,
+  "description": "Web Pronájmy Západ: statický web (tools/build.py) a serverové funkce (api/, lib/)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/api.test.js"
+  }
+}

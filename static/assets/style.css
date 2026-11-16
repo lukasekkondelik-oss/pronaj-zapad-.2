@@ -215,3 +215,13 @@ details p{padding:0 22px 20px;margin:0;color:var(--muted)}
 .done-box p{color:var(--muted)}
 .lcard.static{cursor:default}
 .lcard.static:hover{transform:none;box-shadow:none;border-color:var(--line)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-top:10px}
+.pgrid figure{margin:0;position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--cream-2)}
+.pgrid img{width:100%;aspect-ratio:1;object-fit:cover}
+.pgrid button{position:absolute;top:4px;right:4px;border:0;background:rgba(15,26,42,.85);color:#fff;border-radius:999px;width:24px;height:24px;cursor:pointer;line-height:1}
+.pgrid .bad{display:grid;place-items:center;aspect-ratio:1;font-size:.72rem;color:var(--err);padding:6px;text-align:center}
+.prog{height:6px;background:var(--cream-2);border-radius:99px;overflow:hidden;margin:12px 0 0;display:none}
+.prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s}
+.cf-turnstile{margin:0 0 14px}
+.hint{color:var(--muted);font-size:.85rem;margin:6px 0 0}
+input[type=file]{padding:10px;background:var(--cream)}

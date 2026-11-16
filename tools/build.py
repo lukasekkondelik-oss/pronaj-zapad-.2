@@ -13,6 +13,9 @@ LISTINGS = []     # aktuální nabídky ze Softrealu
 REFERENCES = []   # realizované obchody (ručně, data/references.json)
 DOMAIN = "https://pronajemzapad.cz"          # TODO: nahradit skutečnou doménou
 PROJECT = "pronajemzapad"                    # identifikátor webu v poptávkách (systém bude sdílený s dalšími weby)
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")   # veřejný klíč Cloudflare Turnstile (antispam u formuláře s fotkami)
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")             # jen pro administraci podkladů (/admin/)
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")                # veřejný klíč, data chrání pravidla v databázi
 FORM_ENDPOINT = ""                            # TODO: URL formulářového backendu (n8n webhook, Formspree…); prázdné = mailto
 MAIN_SITE = "https://alfaestate.cz"
 TODAY = datetime.date.today().isoformat()
@@ -114,8 +117,8 @@ def form_html(idp="f", place=None):
     opts = lambda xs: "".join(f'<option>{E(x)}</option>' for x in xs)
     city = place["name"] if place else ""
     O_TYP, O_DISP, O_POMOC = opts(["Byt","Rodinný dům","Chata / rekreační objekt","Komerční prostor","Jiné"]), opts(["Garsonka","1+kk","1+1","2+kk","2+1","3+kk","3+1","4+kk a větší","Jiná"]), opts(["Jen zveřejnění nabídky","Zveřejnění + fotografie a text","Prohlídky a komunikace se zájemci","Nájemní smlouva","Kompletní servis","Zatím nevím, poraďte mi"])
-    return f'''<form class="form" data-lead data-endpoint="{E(FORM_ENDPOINT)}" id="{idp}-form" novalidate>
-<input type="hidden" name="formular" value="majitel"><input type="hidden" name="projekt" value="{PROJECT}">
+    captcha = f'<div class="cf-turnstile" data-sitekey="{E(TURNSTILE_SITE_KEY)}" data-language="cs"></div>' if TURNSTILE_SITE_KEY else ""
+    return f'''<form class="form" data-podklady id="{idp}-form" novalidate>
 <h3>Moje nemovitost</h3>
 <div class="row"><div><label for="{idp}-typ">Typ nemovitosti</label><select id="{idp}-typ" name="typ" required><option value="">Vyberte typ</option>{O_TYP}</select></div>
 <div><label for="{idp}-disp">Dispozice</label><select id="{idp}-disp" name="dispozice"><option value="">Vyberte dispozici</option>{O_DISP}</select></div></div>
@@ -128,8 +131,11 @@ def form_html(idp="f", place=None):
 <div class="row"><div><label for="{idp}-jmeno">Jméno a příjmení</label><input id="{idp}-jmeno" name="jmeno" placeholder="Vaše jméno" required autocomplete="name"></div>
 <div><label for="{idp}-tel">Telefon</label><input id="{idp}-tel" name="telefon" type="tel" placeholder="Např. 603 382 392" required autocomplete="tel"></div></div>
 <div class="row one"><div><label for="{idp}-email">E-mail</label><input id="{idp}-email" name="email" type="email" placeholder="Váš e-mail" required autocomplete="email"></div></div>
+<div class="row one"><div><label for="{idp}-fotky">Fotografie (nepovinné, až 12)</label><input id="{idp}-fotky" type="file" accept="image/*" multiple data-fotky>
+<p class="hint">Přidejte fotky přímo z telefonu. Před odesláním se automaticky zmenší a uvidí je jen makléř.</p><div class="pgrid" data-prev></div></div></div>
 <div class="hp" aria-hidden="true"><label>Web<input name="web" tabindex="-1" autocomplete="off"></label></div>
-<label class="consent"><input type="checkbox" name="souhlas" required> <span>Souhlasím se zpracováním osobních údajů pro účely vyřízení mé poptávky. <a href="/ochrana-osobnich-udaju/">Více informací</a></span></label>
+<label class="consent"><input type="checkbox" name="souhlas" required> <span>Souhlasím se zpracováním osobních údajů a fotografií pro účely vyřízení mé nabídky. <a href="/ochrana-osobnich-udaju/">Více informací</a></span></label>
+{captcha}
 <button class="btn" type="submit">Odeslat nabídku →</button>
 <p class="msg" role="status" aria-live="polite"></p>
 </form>'''
@@ -184,6 +190,9 @@ def service(path, name, area):
 
 def page(path, title, desc, body, graph, og_title=None):
     ld = json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False, indent=1)
+    has_form = "data-podklady" in body
+    podklady_js = '<script src="/assets/podklady.js" defer></script>' if has_form else ""
+    turnstile_js = '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' if (has_form and TURNSTILE_SITE_KEY) else ""
     return f'''<!doctype html>
 <html lang="cs"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -199,11 +208,11 @@ def page(path, title, desc, body, graph, og_title=None):
 <meta property="og:image" content="{DOMAIN}/assets/og.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/assets/style.css">
 <script type="application/ld+json">{ld}</script>
-</head><body>
+{turnstile_js}</head><body>
 {header()}
 <main id="obsah">{body}</main>
 {footer()}
-</body></html>'''
+{podklady_js}</body></html>'''
 
 def write(path, content):
     p = OUT / path.strip("/") / "index.html" if path != "/" else OUT / "index.html"
@@ -528,6 +537,10 @@ def listing_page(l):
     if absimgs: h = h.replace(f'<meta property="og:image" content="{DOMAIN}/assets/og.png">', f'<meta property="og:image" content="{E(absimgs[0])}">')
     write(path, h)
 
+def admin_config():
+    d = OUT / "admin"; d.mkdir(parents=True, exist_ok=True)
+    (d / "config.js").write_text("window.PZ_CONFIG = " + json.dumps({"url": SUPABASE_URL, "anonKey": SUPABASE_ANON_KEY}) + ";\n", encoding="utf-8")
+
 def slugify(t):
     t = unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", t).strip("-")
@@ -542,5 +555,5 @@ if __name__ == "__main__":
     REFERENCES = load_references()
     home(); place_pages(); privacy(); not_found(); listings_page()
     for l in LISTINGS: listing_page(l)
-    static_files()
+    static_files(); admin_config()
     print(f"hotovo, nabídek: {len(LISTINGS)}, referencí: {len(REFERENCES)}")

@@ -42,4 +42,4 @@ V `tools/build.py` nastavte `FORM_ENDPOINT = "https://hook.eu2.make.com/…"` (U
 
 ## Další scénáře (finální nabídka)
 - **Pravidelná kontrola Softrealu:** každých 30 minut stáhnout export, porovnat otisk (hash) s minulým během a při změně zavolat Vercel Deploy Hook. Díky tomu stažená nabídka zmizí i z webu. Doplňte až po ověření exportu (`docs/SOFTREAL.md`).
-- **Podklady od majitele (formulář s fotkami):** zapíše se do administrace podkladů a do Make dorazí jen upozornění s odkazem. Makléřce přijde e-mail, majiteli potvrzení. Doplní se ve fázi 3.
+- **Podklady od majitele (formulář s fotkami):** podklady se uloží do administrace a serverová funkce pošle do Make jen upozornění (adresa webhooku je jen na serveru, ne v prohlížeči). Pole: `projekt`, `formular` (`majitel`), `podklady_id`, `odkaz` (do administrace), `jmeno`, `telefon`, `email`, `typ`, `dispozice`, `mesto`, `plocha`, `najemne`, `od`, `popis`, `pomoc`, `pocet_fotek`, `souhlas`, `zdroj`, `odeslano`. Scénář: řádek v Google Sheets, e-mail makléřce s odkazem, potvrzení majiteli. Fotky se do Make neposílají, zůstávají v neveřejném úložišti.
