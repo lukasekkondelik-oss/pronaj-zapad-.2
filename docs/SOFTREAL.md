@@ -30,7 +30,7 @@ Seznam nabídek v tomto tvaru (povinné: `id`, `title`, `type`, `city`, `rent_cz
 Vše ostatní provede `normalize()`: zahodí neúplné záznamy (s varováním), zruší fotky bez `https://`, doplní adresu stránky.
 
 ## Pojistky
-- Chyba stažení, nebo nedokončený `parse()` → build skončí a Vercel ponechá předchozí funkční web.
+- Chyba stažení, nebo nedokončený `parse()` → build skončí a hosting ponechá předchozí funkční web.
 - Export s 0 použitelnými nabídkami → build skončí. Pokud opravdu žádné nabídky nejsou, nastavte `ALLOW_EMPTY=1`.
 - Adresa stránky se skládá z názvu a ID. Změní-li makléř název v Softrealu, změní se i adresa. Pokud to bude vadit, přidáme přesměrování.
 
