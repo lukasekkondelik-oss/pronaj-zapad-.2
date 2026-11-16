@@ -49,7 +49,7 @@ FAQ = [
  ("Zajistíte také fotografie a text inzerátu?",
   "Ano, pomůžeme s přípravou textu i fotografií, aby nabídka dobře vynikla. Rozsah a případnou cenu doladíme předem, než se do čehokoli pustíme."),
  ("Jaké nemovitosti pronajímáte a ve kterých lokalitách?",
-  "Zaměřujeme se na pronájem bytů a domů v Karlovarském kraji, především v Karlových Varech, Chebu, Sokolově, Mariánských Lázních a Ostrově. Jiná lokalita nebo typ nemovitosti? Napište nám, rádi se podíváme."),
+  "Zaměřujeme se na pronájem bytů a domů v Karlovarském kraji, především v Karlových Varech, Chodově, Chebu, Sokolově, Mariánských Lázních a Ostrově. Jiná lokalita nebo typ nemovitosti? Napište nám, rádi se podíváme."),
  ("Co budu potřebovat k zahájení pronájmu?",
   "Stačí základní informace o nemovitosti, vaše kontakty a od kdy je volná. Pro uzavření smlouvy pak typicky potřebujeme doklad o vlastnictví a v případě, že se na vaši nemovitost vztahuje povinnost, také průkaz energetické náročnosti budovy (PENB). Vše vám rádi vysvětlíme."),
  ("Pomůžete mi s nájemní smlouvou?",
@@ -68,6 +68,13 @@ PLACES = {
    body=["Poptávka v lázeňském městě má svá specifika: různé čtvrti (Rybáře, Drahovice, Tuhnice, Doubí, Dvory, Stará Role a další) oslovují odlišné zájemce a podle toho je třeba nemovitost prezentovat. Hned na začátku s vámi proto probereme, komu je váš byt nebo dům nejvíc určen.",
          "Zveřejnění nabídky na portálu je zdarma. Fotografie, prohlídky, komunikaci se zájemci i nájemní smlouvu zajistíme podle domluvy."],
    faq=[("Kde sídlíte v Karlových Varech?", "Naše provozovna je na adrese Majakovského 707/29, 360 05 Karlovy Vary – Rybáře. Po telefonické domluvě se rádi sejdeme osobně.")]),
+ "chodov": dict(name="Chodov", loc="v Chodově", sub="Hned vedle Karlových Varů",
+   title="Pronájem bytu a domu v Chodově pro majitele",
+   desc="Pronajímáte byt nebo dům v Chodově u Karlových Varů? Nabídku zveřejníme zdarma a pomůžeme s fotografiemi, prohlídkami i nájemní smlouvou. ALFA ESTATE.",
+   intro="Chodov leží hned vedle Karlových Varů a pro mnoho nájemníků je přirozenou volbou, když chtějí bydlet blízko velkého města. Pomůžeme vám nabídku nastavit tak, aby oslovila ty správné zájemce.",
+   body=["Než nabídku zveřejníme, probereme s vámi, komu je váš byt nebo dům nejvíc určen, a podle toho zvolíme text, fotografie i nájemné.",
+         "Zveřejnění nabídky je zdarma. Fotografie, prohlídky, komunikaci se zájemci i nájemní smlouvu zajistíme podle domluvy."],
+   faq=[("Pronajímáte i nemovitosti mimo Karlovy Vary?", "Ano, působíme v celém Karlovarském kraji, včetně Chodova. Na prohlídku nemovitosti za vámi přijedeme.")]),
  "cheb": dict(name="Cheb", loc="v Chebu", sub="Západ kraje u hranic",
    title="Pronájem bytu a domu v Chebu pro majitele",
    desc="Pronajímáte nemovitost v Chebu? Zveřejníme vaši nabídku zdarma a pomůžeme s prohlídkami, texty, fotografiemi i nájemní smlouvou. ALFA ESTATE, Karlovarský kraj.",
@@ -295,7 +302,7 @@ def place_pages():
 {city_block(p["name"])}
 <section class="formsec" id="formular"><div class="wrap fgrid"><div><span class="eyebrow">Formulář</span><h2>Vložte pronájem {E(p["loc"])}.</h2><p style="color:var(--muted)">Vyplňte základní údaje a ozveme se vám.</p></div>{form_html("p", p)}</div></section>
 <section class="alt"><div class="wrap"><h2>Časté dotazy</h2><div class="prose" style="max-width:820px">{faq_html(faq)}</div></div></section>
-<section><div class="wrap"><h2>Další lokality</h2><div class="places" style="grid-template-columns:repeat(4,1fr)">{others}</div></div></section>'''
+<section><div class="wrap"><h2>Další lokality</h2><div class="places more">{others}</div></div></section>'''
         area = {"@type": "City", "name": p["name"]}
         graph = [ORG,
           {"@type": "WebPage", "@id": url(path) + "#webpage", "url": url(path), "name": p["title"], "isPartOf": {"@id": DOMAIN + "/#website"}, "inLanguage": "cs", "dateModified": TODAY},
@@ -316,7 +323,7 @@ def privacy():
 <h2>Vaše práva</h2>
 <p>Máte právo na přístup k údajům, jejich opravu, výmaz, omezení zpracování, přenositelnost a právo vznést námitku. Máte také právo podat stížnost u Úřadu pro ochranu osobních údajů (<a href="https://www.uoou.cz" rel="noopener">uoou.cz</a>).</p>
 <h2>Cookies</h2>
-<p>Tento web nepoužívá analytické ani marketingové cookies.</p>
+<p>Tento web může používat cookies. Technické cookies nutné pro fungování webu používáme vždy. Analytické a marketingové cookies používáme jen s vaším souhlasem, který můžete kdykoli změnit.</p>
 <p><small>Text je vstupní návrh a před spuštěním by ho měl zkontrolovat právník nebo pověřená osoba správce.</small></p></div></div></section>'''
     graph = [ORG, {"@type": "WebPage", "@id": url(path) + "#webpage", "url": url(path), "name": "Ochrana osobních údajů", "inLanguage": "cs"}]
     html_ = page(path, "Ochrana osobních údajů | Pronájmy Západ", "Informace o zpracování osobních údajů na webu Pronájmy Západ.", body, graph).replace('content="index,follow,max-image-preview:large,max-snippet:-1"', 'content="noindex,follow"')
@@ -346,7 +353,7 @@ def static_files():
 ## Aktuální nabídky
 """ + ("".join(f"- [{l['title']}]({url('/nabidky/'+l['slug']+'/')}): {l['type']} {l.get('disposition') or ''}, {l['city']}, {czk(l['rent_czk'])}/měsíc\n" for l in LISTINGS) or "- Aktuálně žádné nabídky.\n") + (f"\nRealizované obchody (reference): {url('/')}#realizovane\n" if REFERENCES else "") + f"""
 ## Fakta
-- Oblast působnosti: Karlovarský kraj (Karlovy Vary, Cheb, Sokolov, Mariánské Lázně, Ostrov a okolí)
+- Oblast působnosti: Karlovarský kraj (Karlovy Vary, Chodov, Cheb, Sokolov, Mariánské Lázně, Ostrov a okolí)
 - Provozovna: {CO["street"]}, {CO["zip"]} {CO["city"]} – {CO["district"]}
 - Telefon: 603 382 392 (Soňa Petříková), 776 686 776 (Vít Čirik)
 - E-mail: {CO["email"]}
