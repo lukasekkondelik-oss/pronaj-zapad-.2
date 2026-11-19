@@ -315,3 +315,7 @@ input[type=file]{padding:10px;background:var(--cream)}
 .soc-ic svg{width:22px;height:22px}
 .soc-t b{display:block;font:600 1.05rem var(--sans);color:#fff}
 .soc-t small{display:block;color:#c3c9d4;font-size:.82rem;white-space:nowrap}
+
+html{scroll-padding-top:96px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+.nav a:not(.btn)[aria-current]{color:var(--gold-l);text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:8px;text-decoration-thickness:2px}

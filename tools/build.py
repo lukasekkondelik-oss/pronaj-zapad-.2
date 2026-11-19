@@ -388,7 +388,7 @@ def about_page():
 <div class="pstats">{st}</div>
 <p class="pcontact"><a href="tel:{t['tel']}">{t['tel_h']}</a> · <a href="mailto:{CO['email']}">{CO['email']}</a></p></div></article>"""
     body = f"""
-<section class="about-hero"><div class="wrap split">
+<section class="about-hero" id="kancelar"><div class="wrap split">
 <figure class="phframe wide"><img src="/assets/team/tym.jpg" alt="Soňa Petříková a Vít Čirik, realitní makléři ALFA ESTATE" width="776" height="446"></figure>
 <div><span class="eyebrow">O nás</span><h1>Realitní kancelář s osobním přístupem.</h1>
 <blockquote>„Reality nejsou jen obchod. Jsou to životní příběhy, nové začátky a zásadní rozhodnutí.“</blockquote>
@@ -400,18 +400,18 @@ def about_page():
 <li>{ICON['check']}<div><b>Výstavba rodinných domů na klíč</b></div></li></ul>
 <p><a href="{MAIN_SITE}" rel="noopener">Hlavní web ALFA ESTATE na alfaestate.cz →</a></p></div></div></section>
 
-<section class="dark statband"><div class="wrap"><div class="stats">{stats}</div></div></section>
+<section class="dark statband" id="cisla"><div class="wrap"><div class="stats">{stats}</div></div></section>
 
-<section><div class="wrap">
+<section id="hodnoty"><div class="wrap">
 <div class="head"><div><span class="eyebrow">Proč právě my</span><h2>Na čem stavíme.</h2></div>
 <p>Spojení zkušeností, profesionality a spolehlivosti pro majitele, kteří očekávají víc než běžný realitní servis.</p></div>
 <div class="vals">{vals}</div></div></section>
 
-<section class="alt"><div class="wrap">
+<section class="alt" id="tym"><div class="wrap">
 <div class="head"><div><span class="eyebrow">Lidé za značkou</span><h2>Náš tým.</h2></div><p>Dva odborníci, jeden cíl: výsledek, který předčí vaše očekávání.</p></div>
 {people}</div></section>
 
-<section class="dark ctaband"><div class="wrap">
+<section class="dark ctaband" id="konzultace"><div class="wrap">
 <div><span class="eyebrow">Kontakt</span><h2>Domluvme si nezávaznou konzultaci.</h2>
 <p>Napište nám nebo zavolejte. Rádi si vyslechneme vaši situaci a navrhneme nejvhodnější řešení, bez závazků. Jsme vám k dispozici každý pracovní den od 9:00 do 17:00.</p></div>
 <div class="cta"><a class="btn" href="/#formular">Napsat nám →</a><a class="btn ghost" href="tel:{CO['phones'][0][1]}">{CO['phones'][0][0]}</a></div></div></section>"""

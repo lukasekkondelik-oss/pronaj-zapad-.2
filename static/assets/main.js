@@ -17,4 +17,29 @@
       emp.hidden=n>0};
     ff.addEventListener('input',apply);ff.addEventListener('submit',function(e){e.preventDefault()});apply();
   }
+
+  // živá adresa: při scrollování se mění #kotva podle sekce, ve které jste (bez skoku a bez plnění historie)
+  (function(){
+    var secs=[].slice.call(document.querySelectorAll('main section[id]'));
+    var links=[].slice.call(document.querySelectorAll('.nav a'));
+    var path=location.pathname;
+    links.forEach(function(a){var h=a.getAttribute('href');if(h===path)a.setAttribute('aria-current','page')});
+    if(secs.length<2||!window.history||!history.replaceState)return;
+    var group={'pro-majitele':'jak-to-funguje'},cur=null,tick=false;
+    function setActive(id){
+      links.forEach(function(a){
+        var h=a.getAttribute('href')||'',m=h.match(/#(.+)$/);
+        if(!m)return;var key=group[id]||id;
+        if(id&&m[1]===key&&(h.charAt(0)==='#'||h.split('#')[0]===path))a.setAttribute('aria-current','location');
+        else if(a.getAttribute('aria-current')==='location')a.removeAttribute('aria-current')})}
+    function update(){
+      tick=false;
+      var line=window.innerHeight*0.35,id=null;
+      for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top<=line)id=secs[i].id;else break}
+      if(window.scrollY<80)id=null;
+      if(id===cur)return;cur=id;setActive(id);
+      try{history.replaceState(null,'',path+location.search+(id?'#'+id:''))}catch(e){}}
+    window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(update)}},{passive:true});
+    window.addEventListener('load',update);
+  })();
 })();
