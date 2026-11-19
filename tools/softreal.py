@@ -39,9 +39,133 @@ def fetch_raw():
         raise FeedError(f"Stažení exportu selhalo: {e}")
 
 
-def parse(raw):
-    """TODO: převést export Softrealu (bytes) na seznam slovníků v tvaru výše."""
-    raise NotImplementedError("Formát exportu Softrealu zatím není implementován, viz docs/SOFTREAL.md")
+MAPPING_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "softreal_mapping.json")
+
+
+def _xml_to_obj(el):
+    """XML element -> dict/str. Opakující se značky se stanou seznamem, atributy mají předponu @."""
+    kids = list(el)
+    if not kids and not el.attrib:
+        return (el.text or "").strip()
+    d = {"@" + k: v for k, v in el.attrib.items()}
+    for k in kids:
+        tag = k.tag.split("}")[-1]
+        v = _xml_to_obj(k)
+        if tag in d:
+            if not isinstance(d[tag], list):
+                d[tag] = [d[tag]]
+            d[tag].append(v)
+        else:
+            d[tag] = v
+    txt = (el.text or "").strip()
+    if txt and not kids:
+        d["#text"] = txt
+    return d
+
+
+def _get(obj, path):
+    """Hodnota podle cesty s tečkami (a.b.c). Seznam v cestě se prochází a výsledky se spojí. '' = celý objekt."""
+    if path in ("", None):
+        return obj
+    cur = [obj]
+    for part in str(path).split("."):
+        nxt = []
+        for c in cur:
+            if isinstance(c, list):
+                c = [x for x in c]
+                for x in c:
+                    if isinstance(x, dict) and part in x:
+                        nxt.append(x[part])
+            elif isinstance(c, dict) and part in c:
+                nxt.append(c[part])
+        cur = nxt
+        if not cur:
+            return None
+    flat = []
+    for c in cur:
+        flat.extend(c if isinstance(c, list) else [c])
+    return flat[0] if len(flat) == 1 else flat
+
+
+def _num(v):
+    if v is None or v == "":
+        return None
+    m = re.sub(r"[^0-9,.\-]", "", str(v).replace(" ", "").replace("\xa0", "")).replace(",", ".")
+    try:
+        f = float(m)
+    except ValueError:
+        return None
+    return int(f) if f == int(f) else f
+
+
+def _as_list(v):
+    if v is None or v == "":
+        return []
+    return v if isinstance(v, list) else [v]
+
+
+def _text(v):
+    if isinstance(v, dict):
+        v = v.get("#text", "")
+    return str(v).strip() if v is not None else ""
+
+
+def parse(raw, mapping=None):
+    """Export Softrealu (JSON nebo XML, bytes) -> seznam nabídek v kanonickém tvaru.
+
+    Co kde v exportu leží určuje soubor tools/softreal_mapping.json (viz docs/SOFTREAL.md):
+      items_path          cesta k seznamu nabídek
+      filter              {"path": ..., "in": [...]} nebo {"path": ..., "equals": ...}; ponechá jen pronájmy
+      fields              kanonické pole -> cesta; číselná pole: "number:cesta"
+      value_map           {pole: {"hodnota v exportu": "hodnota na webu"}}
+      photos_path, photo_url_key   seznam fotek (řetězce nebo objekty s adresou pod klíčem)
+      features_path       seznam vlastností
+    """
+    if mapping is None:
+        if not os.path.exists(MAPPING_FILE):
+            raise NotImplementedError("Chybí tools/softreal_mapping.json (formát exportu Softrealu zatím není znám), viz docs/SOFTREAL.md")
+        import json
+        with open(MAPPING_FILE, encoding="utf-8") as f:
+            mapping = json.load(f)
+    import json
+    head = raw.lstrip()[:1]
+    try:
+        if head in (b"{", b"["):
+            data = json.loads(raw.decode("utf-8-sig"))
+        else:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(raw)
+            data = {root.tag.split("}")[-1]: _xml_to_obj(root)}
+    except Exception as e:
+        raise FeedError(f"Export nejde přečíst (ani JSON, ani XML): {e}")
+    items = _as_list(_get(data, mapping.get("items_path", "")))
+    flt = mapping.get("filter")
+    vmap = mapping.get("value_map", {})
+    out = []
+    for it in items:
+        if flt:
+            v = _text(_get(it, flt["path"]))
+            if "equals" in flt and v != str(flt["equals"]):
+                continue
+            if "in" in flt and v not in [str(x) for x in flt["in"]]:
+                continue
+        rec = {}
+        for k, path in mapping.get("fields", {}).items():
+            numeric = str(path).startswith("number:")
+            val = _get(it, path[7:] if numeric else path)
+            val = _num(_text(val)) if numeric else _text(val)
+            if k in vmap and val in vmap[k]:
+                val = vmap[k][val]
+            if val not in (None, ""):
+                rec[k] = val
+        key = mapping.get("photo_url_key", "url")
+        photos = []
+        for ph in _as_list(_get(it, mapping.get("photos_path", "photos"))):
+            photos.append(_text(ph.get(key)) if isinstance(ph, dict) else _text(ph))
+        rec["photos"] = [u for u in photos if u]
+        rec["features"] = [t for t in map(_text, _as_list(_get(it, mapping.get("features_path", "features")))) if t]
+        out.append(rec)
+    return out
 
 
 def _photo(p):

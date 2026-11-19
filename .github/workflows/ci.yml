@@ -17,3 +17,5 @@ jobs:
         run: node --check static/admin/admin.js && node --check static/assets/podklady.js
       - name: Testy API
         run: node --test tests/api.test.js
+      - name: Testy zpracování Softrealu
+        run: python3 tests/softreal.test.py

@@ -1,0 +1,30 @@
+{
+  "_comment": "PŘÍKLAD. Po obdržení skutečného vzorku exportu zkopírujte jako softreal_mapping.json a upravte cesty. Bez souboru softreal_mapping.json build s nastaveným SOFTREAL_FEED_URL skončí chybou.",
+  "items_path": "export.nemovitosti.nemovitost",
+  "filter": {"path": "typ_nabidky", "in": ["pronájem", "pronajem"]},
+  "fields": {
+    "id": "id",
+    "title": "nazev",
+    "type": "typ_nemovitosti",
+    "disposition": "dispozice",
+    "city": "mesto",
+    "district": "cast_obce",
+    "area_m2": "number:plocha",
+    "floor": "podlazi",
+    "rent_czk": "number:cena",
+    "fees_czk": "number:poplatky",
+    "deposit_czk": "number:kauce",
+    "available_from": "volne_od",
+    "furnished": "vybaveni",
+    "energy_class": "penb",
+    "description": "popis",
+    "contact_name": "makler.jmeno",
+    "contact_phone": "makler.telefon",
+    "published_at": "vlozeno",
+    "updated_at": "upraveno"
+  },
+  "value_map": {"furnished": {"vybaveno": "ano", "částečně": "castecne", "nevybaveno": "ne"}},
+  "photos_path": "fotky.foto",
+  "photo_url_key": "url",
+  "features_path": "vlastnosti.vlastnost"
+}
