@@ -49,3 +49,13 @@ drop policy if exists "admins read photos" on storage.objects;
 create policy "admins read photos" on storage.objects for select to authenticated using (bucket_id = 'submissions');
 drop policy if exists "admins delete photos" on storage.objects;
 create policy "admins delete photos" on storage.objects for delete to authenticated using (bucket_id = 'submissions');
+
+-- Záznamy o odeslání formuláře „Mám zájem“: jen pro omezení počtu odeslání z jedné IP (maže se po 1 dni).
+-- Žádné politiky: přístup má jen serverová funkce (service klíč).
+create table if not exists public.inquiry_events (
+  id         uuid primary key default gen_random_uuid(),
+  ip_hash    text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists inquiry_events_ip_idx on public.inquiry_events (ip_hash, created_at);
+alter table public.inquiry_events enable row level security;

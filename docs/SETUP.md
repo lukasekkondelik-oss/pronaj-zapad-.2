@@ -10,7 +10,7 @@ Zdroje: `static/` (CSS, JS, obrázky), `data/references.json` (Realizované obch
    - `ALLOW_EMPTY=1` jen pokud je prázdný seznam nabídek záměr.
 3. **Settings → Git → Deploy Hooks → Create Hook** (větev, ze které se staví): URL se použije v Make pro pravidelné přegenerování (viz `docs/MAKE.md`).
 4. **Production Branch:** nastavte větev, ze které má běžet ostrý web. Ostatní větve dostanou náhledovou adresu (preview).
-5. V `tools/build.py` nastavte `DOMAIN` (skutečná doména) a `FORM_ENDPOINT` (adresa webhooku v Make).
+5. V `tools/build.py` nastavte `DOMAIN` (skutečná doména).
 6. **Plán:** bezplatný plán Hobby je podle podmínek Vercelu jen pro nekomerční použití. Web klienta patří na plán Pro, nebo na účet klienta.
 
 Při selhání buildu (nedostupný Softreal, prázdný export) zůstává nasazená předchozí funkční verze.
@@ -38,6 +38,9 @@ python3 -m http.server -d dist 8000
 ## Formulář majitele s fotkami a administrace podkladů
 
 ### Jak to funguje
+Formulář „Mám zájem“ pod nabídkou jde přes `api/poptavka` (Turnstile, honeypot, časová past, max. 5 odeslání za hodinu z jedné IP, záznamy se mažou po 1 dni). Adresy webhooků Make tak nejsou veřejné a nikdo je nemůže zneužít k rozesílání e-mailů.
+
+Postup u majitele:
 1. Majitel vyplní formulář a přidá fotky. V prohlížeči se zmenší na max. 1600 px (JPEG).
 2. Funkce `api/podklady.js` (logika v `lib/core.js`) ověří antispam (Cloudflare Turnstile, honeypot, časová past, limit 5 odeslání za hodinu z jedné IP), uloží údaje do Supabase a přijme fotky jednu po druhé (kontroluje, že jde opravdu o JPEG do 2 MB).
 3. Po dokončení pošle upozornění do Make (e-mail makléřce s odkazem na podklady, potvrzení majiteli, řádek v Google Sheets). Když Make nefunguje, podklady se uloží stejně a v administraci svítí „e-mail neodešel“.
@@ -62,7 +65,8 @@ Dashboard → Turnstile → Add site (doména webu). Získáte *Site Key* (veře
 | `SUPABASE_SERVICE_KEY` | jen funkce | **tajný** |
 | `TURNSTILE_SITE_KEY` | build (formulář) | veřejný |
 | `TURNSTILE_SECRET` | jen funkce | tajný, bez něj funkce odmítne vše |
-| `MAKE_WEBHOOK_URL` | jen funkce | adresa Custom webhooku v Make |
+| `MAKE_WEBHOOK_URL` | jen funkce | webhook scénáře **B** (podklady od majitele) |
+| `MAKE_WEBHOOK_URL_ZAJEMCE` | jen funkce | webhook scénáře **A** (Mám zájem), volá ho `api/poptavka` |
 | `IP_SALT` | jen funkce | libovolný dlouhý náhodný řetězec |
 | `CRON_SECRET` | jen funkce | libovolný dlouhý náhodný řetězec, Vercel ho posílá cronu automaticky |
 | `PUBLIC_URL` | jen funkce | např. `https://pronajemzapad.cz` (odkaz v e-mailu) |

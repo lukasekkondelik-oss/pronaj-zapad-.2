@@ -1,7 +1,6 @@
 # Zpracování poptávek a automatické e-maily (Make)
 
-Web posílá každý odeslaný formulář jako JSON metodou POST na jedinou adresu (`FORM_ENDPOINT` v `tools/build.py`),
-tedy na **Custom webhook** v Make. Make poptávku zpracuje, uloží, rozešle e-maily a upozorní tým.
+Web neposílá nic do Make přímo z prohlížeče. Oba formuláře jdou přes naše serverové funkce (`api/poptavka`, `api/podklady`), které ověří antispam a teprve pak zavolají **Custom webhook** v Make. Make poptávku zapíše do tabulky a rozešle e-maily.
 
 ## Datový formát (webhook)
 Společná pole: `projekt` (identifikátor webu, tady `pronajemzapad`, aby šel scénář použít i pro další weby), `formular` (`majitel` | `zajemce`), `jmeno`, `telefon`, `email`, `souhlas`, `zdroj` (cesta stránky), `odeslano` (ISO čas).
@@ -38,7 +37,7 @@ Poptávky se ukládají **jen do Google Sheets** a chodí e-mailem. Žádné CRM
 - **Limity Make**: bezplatný tarif má omezený počet operací, pro provoz s desítkami poptávek měsíčně zvažte placený tarif.
 
 ## Nastavení webu
-V `tools/build.py` nastavte `FORM_ENDPOINT = "https://hook.eu2.make.com/…"` (URL z modulu Custom webhook) a znovu nasaďte.
+Adresy webhooků se nastavují jako proměnné prostředí na Vercelu (`MAKE_WEBHOOK_URL`, `MAKE_WEBHOOK_URL_ZAJEMCE`), viz `docs/SETUP.md`.
 
 ## Další scénáře (finální nabídka)
 - **Pravidelná kontrola Softrealu:** každých 30 minut stáhnout export, porovnat otisk (hash) s minulým během a při změně zavolat Vercel Deploy Hook. Díky tomu stažená nabídka zmizí i z webu. Doplňte až po ověření exportu (`docs/SOFTREAL.md`).
@@ -53,7 +52,7 @@ V `tools/build.py` nastavte `FORM_ENDPOINT = "https://hook.eu2.make.com/…"` (U
 ## Hotové scénáře (19. 11. 2026, tým *My Team*, zóna eu1)
 | Scénář | ID | Webhook | Kdo ho volá |
 |---|---|---|---|
-| A: Mám zájem o prohlídku | 8675366 | „Pronájmy Západ – Mám zájem (zájemce)“ | formulář pod nabídkou |
+| A: Mám zájem o prohlídku | 8675366 | „Pronájmy Západ – Mám zájem (zájemce)“ | serverová funkce `api/poptavka` (proměnná `MAKE_WEBHOOK_URL_ZAJEMCE`) |
 | B: Podklady od majitele | 8675367 | „Pronájmy Západ – Podklady od majitele“ | serverová funkce `api/podklady` (proměnná `MAKE_WEBHOOK_URL`) |
 
 **Adresy webhooků se do repozitáře nevkládají.** Jsou v Make (Scenarios → webhook) a nastavují se jen jako proměnné prostředí / v nastavení webu.

@@ -111,4 +111,32 @@
       }).catch(function () { fail(); });
     });
   });
+
+  // ---------- „Mám zájem o prohlídku“ (formulář pod nabídkou) ----------
+  document.querySelectorAll('form[data-zajemce]').forEach(function (f) {
+    var msg = f.querySelector('.msg'), btn = f.querySelector('button[type=submit]'), opened = Date.now(), busy = false;
+    function show(t, c) { msg.className = 'msg ' + c; msg.textContent = t; }
+    function resetCaptcha() { if (window.turnstile && f.querySelector('.cf-turnstile')) { try { window.turnstile.reset(); } catch (x) {} } }
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (busy) return;
+      if (!f.checkValidity()) { f.reportValidity(); return; }
+      var d = {}; new FormData(f).forEach(function (v, k) { if (k !== 'cf-turnstile-response') d[k] = v; });
+      d.souhlas = f.querySelector('[name=souhlas]').checked;
+      d.zdroj = location.pathname; d.otevreno = opened;
+      if (f.querySelector('.cf-turnstile')) {
+        var t = f.querySelector('[name=cf-turnstile-response]');
+        if (!t || !t.value) { show('Potvrďte prosím, že nejste robot.', 'err'); return; }
+        d.turnstile = t.value;
+      }
+      busy = true; btn.disabled = true; show('Odesílám…', 'ok');
+      post('/api/poptavka', d).then(function (r) {
+        busy = false; btn.disabled = false;
+        if (r.ok) { f.reset(); resetCaptcha(); show('Děkujeme, poptávku jsme přijali. Brzy se vám ozveme a domluvíme prohlídku.', 'ok'); return; }
+        resetCaptcha();
+        if (r.__status === 422) show('Zkontrolujte prosím vyplněné údaje (jméno, telefon, e-mail).', 'err');
+        else show((r.chyba && r.__status < 500 ? r.chyba : 'Odeslání se nepovedlo.') + ' Zavolejte nám prosím na ' + PHONE + '.', 'err');
+      }).catch(function () { busy = false; btn.disabled = false; resetCaptcha(); show('Odeslání se nepovedlo. Zavolejte nám prosím na ' + PHONE + '.', 'err'); });
+    });
+  });
 })();

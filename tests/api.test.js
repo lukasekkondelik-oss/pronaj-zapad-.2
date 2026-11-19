@@ -22,7 +22,7 @@ async function start(over = {}) {
 test.before(async () => {
   port = await mock.listen();
   Object.assign(process.env, {
-    SUPABASE_URL: 'http://127.0.0.1:' + port, SUPABASE_SERVICE_KEY: 'svc', MAKE_WEBHOOK_URL: `http://127.0.0.1:${port}/hook`,
+    SUPABASE_URL: 'http://127.0.0.1:' + port, SUPABASE_SERVICE_KEY: 'svc', MAKE_WEBHOOK_URL: `http://127.0.0.1:${port}/hook`, MAKE_WEBHOOK_URL_ZAJEMCE: `http://127.0.0.1:${port}/hook`,
     ALLOW_NO_CAPTCHA: '1', IP_SALT: 'test', CRON_SECRET: 'cron', PUBLIC_URL: 'https://example.cz',
   });
   core = require('../lib/core');
@@ -151,4 +151,61 @@ test('cleanup: vyžaduje tajný klíč a maže podle lhůt, převzaté nechává
   const ids = mock.rows.map((x) => x.id);
   for (const gone of ['a1', 'b1', 'c1', 'd1']) { assert.ok(!ids.includes(`00000000-0000-4000-8000-0000000000${gone}`), gone); assert.ok(!mock.files.has(`00000000-0000-4000-8000-0000000000${gone}/1.jpg`), gone + ' soubor'); }
   for (const kept of ['a2', 'b2', 'd2', 'e1']) { assert.ok(ids.includes(`00000000-0000-4000-8000-0000000000${kept}`), kept); }
+});
+
+// ---------- „Mám zájem“ (/api/poptavka) ----------
+const GOODQ = { jmeno: 'Eva Zájemce', telefon: '602 111 222', email: 'eva@example.cz', zprava: 'Chci se přijít podívat', souhlas: 'on', nabidka_id: 'abc-1', nabidka: 'Byt 2+kk', nabidka_url: 'https://example.cz/nabidky/byt/', kontakt: 'Vít Čirik', zdroj: '/nabidky/byt/', otevreno: Date.now() - 10000 };
+const ask = (over = {}, ip = '8.8.' + Math.floor(Math.random() * 250) + '.' + Math.floor(Math.random() * 250), headers = {}) => core.handlePoptavka({
+  method: over.__method || 'POST', headers: { host: 'localhost', ...headers }, ip,
+  stream: Readable.from([Buffer.from(JSON.stringify({ ...GOODQ, ...over }))]),
+});
+
+test('Mám zájem: platné odeslání předá poptávku do Make ve správném tvaru', async () => {
+  const n = mock.hooks.length;
+  const r = await ask({ jmeno: 'Eva Test' });
+  assert.equal(r.status, 200); assert.equal(r.body.ok, true);
+  assert.equal(mock.hooks.length, n + 1);
+  const h = mock.hooks.at(-1);
+  assert.equal(h.formular, 'zajemce'); assert.equal(h.jmeno, 'Eva Test'); assert.equal(h.email, 'eva@example.cz');
+  assert.equal(h.kontakt, 'Vít Čirik'); assert.equal(h.nabidka, 'Byt 2+kk'); assert.equal(h.souhlas, 'on'); assert.equal(h.projekt, 'pronajemzapad');
+  assert.ok(Date.parse(h.odeslano) > Date.now() - 60000, 'čas odeslání nastavuje server, ne prohlížeč');
+});
+
+test('Mám zájem: validace, honeypot a časová past', async () => {
+  const n = mock.hooks.length;
+  const bad = await ask({ jmeno: 'E', telefon: 'x', email: 'nic', souhlas: false });
+  assert.equal(bad.status, 422); assert.deepEqual(bad.body.chyby.sort(), ['email', 'jmeno', 'souhlas', 'telefon']);
+  assert.equal((await ask({ web: 'spam' })).status, 200);
+  assert.equal((await ask({ otevreno: Date.now() - 300 })).status, 400);
+  assert.equal(mock.hooks.length, n, 'nic z toho se nesmí dostat do Make');
+});
+
+test('Mám zájem: omezení počtu odeslání z jedné IP a cizí původ', async () => {
+  const ip = '6.6.6.6', codes = [];
+  for (let i = 0; i < 7; i++) codes.push((await ask({}, ip)).status);
+  assert.deepEqual(codes, [200, 200, 200, 200, 200, 429, 429]);
+  assert.equal((await ask({}, undefined, { origin: 'https://evil.example' })).status, 403);
+  assert.equal((await ask({ __method: 'GET' })).status, 405);
+});
+
+test('Mám zájem: Turnstile se vyžaduje a výpadek Make vrátí chybu místo tichého ztracení', async () => {
+  const keep = process.env.TURNSTILE_SECRET;
+  process.env.TURNSTILE_SECRET = 'sekret'; process.env.TURNSTILE_VERIFY_URL = `http://127.0.0.1:${port}/ts`;
+  try {
+    assert.equal((await ask({})).status, 403);
+    assert.equal((await ask({ turnstile: 'ok-token' })).status, 200);
+  } finally { delete process.env.TURNSTILE_VERIFY_URL; if (keep) process.env.TURNSTILE_SECRET = keep; else delete process.env.TURNSTILE_SECRET; }
+  mock.setMakeDown(true);
+  try { assert.equal((await ask({})).status, 502, 'návštěvník se dozví, že se odeslání nepovedlo'); } finally { mock.setMakeDown(false); }
+  const keepHook = process.env.MAKE_WEBHOOK_URL_ZAJEMCE; delete process.env.MAKE_WEBHOOK_URL_ZAJEMCE;
+  try { assert.equal((await ask({})).status, 500); } finally { process.env.MAKE_WEBHOOK_URL_ZAJEMCE = keepHook; }
+});
+
+test('cleanup maže i záznamy pro omezení počtu odeslání starší než den', async () => {
+  const old = new Date(Date.now() - 2 * 86400000).toISOString();
+  mock.tables.inquiry_events.push({ ip_hash: 'stary', created_at: old }, { ip_hash: 'novy', created_at: new Date().toISOString() });
+  const r = await core.handleCleanup({ headers: { authorization: 'Bearer cron' } });
+  assert.equal(r.status, 200);
+  const left = mock.tables.inquiry_events.map((e) => e.ip_hash);
+  assert.ok(!left.includes('stary')); assert.ok(left.includes('novy'));
 });

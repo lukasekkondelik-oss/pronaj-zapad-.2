@@ -5,7 +5,7 @@ const http = require('node:http');
 const readAll = (req) => new Promise((res) => { const c = []; req.on('data', (d) => c.push(d)); req.on('end', () => res(Buffer.concat(c))); });
 
 function createMock({ key = 'svc' } = {}) {
-  const rows = [], files = new Map(), hooks = [];
+  const tables = { submissions: [], inquiry_events: [] }, rows = tables.submissions, files = new Map(), hooks = [];
   let makeDown = false;
   const match = (row, params) => [...params].every(([k, v]) => {
     if (['select', 'limit', 'order'].includes(k)) return true;
@@ -19,7 +19,9 @@ function createMock({ key = 'svc' } = {}) {
     if (u.pathname === '/hook') { if (makeDown) return send(500, {}); hooks.push(JSON.parse(body.toString())); return send(200, { ok: true }); }
     if (u.pathname === '/ts') { const p = new URLSearchParams(body.toString()); return send(200, { success: p.get('response') === 'ok-token' }); }
     if (req.headers.authorization !== 'Bearer ' + key) return send(401, { message: 'unauthorized' });
-    if (u.pathname === '/rest/v1/submissions') {
+    const tm = u.pathname.match(/^\/rest\/v1\/(submissions|inquiry_events)$/);
+    if (tm) {
+      const rows = tables[tm[1]];
       if (req.method === 'POST') {
         const now = new Date().toISOString();
         rows.push({ created_at: now, status_changed_at: now, photo_paths: [], notified: false, ...JSON.parse(body.toString()) });
@@ -45,7 +47,7 @@ function createMock({ key = 'svc' } = {}) {
     send(404, { message: 'nenalezeno ' + u.pathname });
   });
   return {
-    rows, files, hooks, server,
+    rows, tables, files, hooks, server,
     setMakeDown: (v) => { makeDown = v; },
     listen: () => new Promise((r) => server.listen(0, '127.0.0.1', () => r(server.address().port))),
     close: () => new Promise((r) => server.close(r)),

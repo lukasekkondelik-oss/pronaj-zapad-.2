@@ -16,7 +16,6 @@ PROJECT = "pronajemzapad"                    # identifikátor webu v poptávkác
 TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")   # veřejný klíč Cloudflare Turnstile (antispam u formuláře s fotkami)
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")             # jen pro administraci podkladů (/admin/)
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")                # veřejný klíč, data chrání pravidla v databázi
-FORM_ENDPOINT = ""                            # TODO: URL formulářového backendu (n8n webhook, Formspree…); prázdné = mailto
 MAIN_SITE = "https://alfaestate.cz"
 TODAY = datetime.date.today().isoformat()
 
@@ -190,7 +189,7 @@ def service(path, name, area):
 
 def page(path, title, desc, body, graph, og_title=None):
     ld = json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False, indent=1)
-    has_form = "data-podklady" in body
+    has_form = "data-podklady" in body or "data-zajemce" in body
     podklady_js = '<script src="/assets/podklady.js" defer></script>' if has_form else ""
     turnstile_js = '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' if (has_form and TURNSTILE_SITE_KEY) else ""
     return f'''<!doctype html>
@@ -496,14 +495,15 @@ def listing_page(l):
         gallery = f'<div class="gal"><div class="noimg big">{ICON["image"]}<span>Fotografie připravujeme</span></div></div>'
     intro_bits = [l["type"] + (f' {l["disposition"]}' if l.get("disposition") else ""), where]
     short = f'{" · ".join(intro_bits)}. Nájemné {czk(l["rent_czk"])} měsíčně.'
-    inquiry = f'''<form class="form" data-lead data-subject="Zájem o nabídku: {E(l["title"])}" data-success="Děkujeme, poptávku jsme přijali. Brzy se vám ozveme a domluvíme prohlídku." data-endpoint="{E(FORM_ENDPOINT)}" novalidate>
-<h3>Mám zájem o prohlídku</h3><input type="hidden" name="formular" value="zajemce"><input type="hidden" name="projekt" value="{PROJECT}"><input type="hidden" name="nabidka_id" value="{E(l["id"])}"><input type="hidden" name="nabidka" value="{E(l["title"])}"><input type="hidden" name="nabidka_url" value="{E(url(path))}"><input type="hidden" name="kontakt" value="{E(name)}">
+    captcha = f'<div class="cf-turnstile" data-sitekey="{E(TURNSTILE_SITE_KEY)}" data-language="cs"></div>' if TURNSTILE_SITE_KEY else ""
+    inquiry = f'''<form class="form" data-zajemce novalidate>
+<h3>Mám zájem o prohlídku</h3><input type="hidden" name="nabidka_id" value="{E(l["id"])}"><input type="hidden" name="nabidka" value="{E(l["title"])}"><input type="hidden" name="nabidka_url" value="{E(url(path))}"><input type="hidden" name="kontakt" value="{E(name)}">
 <div class="row one"><div><label for="q-jmeno">Jméno a příjmení</label><input id="q-jmeno" name="jmeno" required autocomplete="name"></div></div>
 <div class="row"><div><label for="q-tel">Telefon</label><input id="q-tel" name="telefon" type="tel" required autocomplete="tel"></div><div><label for="q-email">E-mail</label><input id="q-email" name="email" type="email" required autocomplete="email"></div></div>
 <div class="row one"><div><label for="q-zprava">Zpráva</label><textarea id="q-zprava" name="zprava" placeholder="Např. kdy byste se mohli přijít podívat"></textarea></div></div>
 <div class="hp" aria-hidden="true"><label>Web<input name="web" tabindex="-1" autocomplete="off"></label></div>
 <label class="consent"><input type="checkbox" name="souhlas" required> <span>Souhlasím se zpracováním osobních údajů pro účely vyřízení poptávky. <a href="/ochrana-osobnich-udaju/">Více informací</a></span></label>
-<button class="btn" type="submit">Odeslat poptávku →</button><p class="msg" role="status" aria-live="polite"></p></form>'''
+{captcha}<button class="btn" type="submit">Odeslat poptávku →</button><p class="msg" role="status" aria-live="polite"></p></form>'''
     body = f'''<section style="padding:36px 0 84px"><div class="wrap">
 <p class="crumbs" style="color:var(--muted)"><a href="/">Pronájmy Západ</a> › <a href="/nabidky/">Nabídky</a> › {E(l["title"])}</p>
 <h1 style="font-size:clamp(1.8rem,3.6vw,2.7rem)">{E(l["title"])}</h1>
