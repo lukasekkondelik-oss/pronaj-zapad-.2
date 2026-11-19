@@ -233,7 +233,7 @@ def home():
     tk = "".join(f'<li>{ICON[i]}<div><b>{t}</b><span>{d}</span></div></li>' for i,t,d in ticks)
     places = "".join(f'<a class="place" href="/pronajem-{s}/"><b>{E(p["name"])}</b><span>{E(p["sub"])}</span></a>' for s,p in PLACES.items())
     body = f'''
-<section class="hero dark" aria-labelledby="h1">{SKYLINE}<div class="wrap">
+<section class="hero hero-video dark" aria-labelledby="h1"><video class="hero-bg" autoplay muted loop playsinline preload="auto" poster="/assets/video/hero-poster.jpg" aria-hidden="true" tabindex="-1" disablepictureinpicture><source src="/assets/video/hero.webm" type="video/webm"><source src="/assets/video/hero.mp4" type="video/mp4"></video><div class="hero-shade" aria-hidden="true"></div><div class="wrap">
 <span class="eyebrow">Regionální portál pronájmů · Karlovarský kraj</span>
 <h1 id="h1">Váš byt si zaslouží <em>správného nájemníka.</em></h1>
 <p class="lead">Pronajímáte byt nebo dům v Karlovarském kraji? Zveřejněte u nás svou nabídku bez poplatku. S přípravou inzerátu, prohlídkami i nájemní smlouvou vám můžeme pomoci.</p>
