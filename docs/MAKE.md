@@ -43,3 +43,9 @@ V `tools/build.py` nastavte `FORM_ENDPOINT = "https://hook.eu2.make.com/…"` (U
 ## Další scénáře (finální nabídka)
 - **Pravidelná kontrola Softrealu:** každých 30 minut stáhnout export, porovnat otisk (hash) s minulým během a při změně zavolat Vercel Deploy Hook. Díky tomu stažená nabídka zmizí i z webu. Doplňte až po ověření exportu (`docs/SOFTREAL.md`).
 - **Podklady od majitele (formulář s fotkami):** podklady se uloží do administrace a serverová funkce pošle do Make jen upozornění (adresa webhooku je jen na serveru, ne v prohlížeči). Pole: `projekt`, `formular` (`majitel`), `podklady_id`, `odkaz` (do administrace), `jmeno`, `telefon`, `email`, `typ`, `dispozice`, `mesto`, `plocha`, `najemne`, `od`, `popis`, `pomoc`, `pocet_fotek`, `souhlas`, `zdroj`, `odeslano`. Scénář: řádek v Google Sheets, e-mail makléřce s odkazem, potvrzení majiteli. Fotky se do Make neposílají, zůstávají v neveřejném úložišti.
+
+## Dohodnuté nastavení (19. 11. 2026)
+- **Odesílání i příjem e-mailů:** jen `alfaestate@alfaestate.info`. Gmail propojení v Make se vytváří tímto účtem.
+- **Tabulka poptávek:** jedna Google tabulka [Poptávky – Pronájmy Západ](https://docs.google.com/spreadsheets/d/16zshsxj3ZuDZIwlW6ZCWmI2SNxqTXl6OK3QIi4p9D9g/edit) (vlastník `alfaestate@alfaestate.info`), jeden list pro oba typy poptávek. Sloupec „Formulář“ rozlišuje `majitel` a `zajemce`.
+- **Sloupce:** Odesláno, Formulář, Web, Jméno, Telefon, E-mail, Typ nemovitosti, Dispozice, Město, Plocha, Nájemné, K dispozici od, Popis / zpráva, Zájem o pomoc, Nabídka, Odkaz na nabídku, Kontaktní makléř, ID podkladů, Odkaz do administrace, Počet fotek, Stránka odeslání, Souhlas, Stav vyřízení, Poznámka.
+- **Make:** tým *My Team*. Stávající scénář „ALFA ESTATE – poptávka z webu → e-mail makléřům“ (nepoužitý, jiný formát dat) se nemění, nové scénáře A a B vzniknou vedle něj.
