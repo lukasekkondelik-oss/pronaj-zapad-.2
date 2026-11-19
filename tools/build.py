@@ -232,7 +232,19 @@ def page(path, title, desc, body, graph, og_title=None):
 {footer()}
 {mobar}{podklady_js}{consent_js}</body></html>'''
 
+import hashlib
+def _ver(m):
+    f = STATIC / m.group(2).lstrip("/")
+    if not f.is_file():
+        return m.group(0)
+    return f'{m.group(1)}{m.group(2)}?v={hashlib.sha1(f.read_bytes()).hexdigest()[:8]}{m.group(3)}'
+
+def bust(html_):
+    """Přidá k /assets/... odkazům otisk obsahu, aby po nasazení prohlížeč nikdy nepoužil starou zapamatovanou verzi."""
+    return re.sub(r'((?:src|href|poster)=")(/assets/[\w./-]+)(")', _ver, html_)
+
 def write(path, content):
+    content = bust(content)
     p = OUT / path.strip("/") / "index.html" if path != "/" else OUT / "index.html"
     p.parent.mkdir(parents=True, exist_ok=True); p.write_text(content, encoding="utf-8")
 
@@ -561,6 +573,8 @@ def slugify(t):
 if __name__ == "__main__":
     if OUT.exists(): shutil.rmtree(OUT)
     shutil.copytree(STATIC, OUT)
+    css = OUT / "assets" / "style.css"   # obrázky odkazované z CSS taky verzovat
+    css.write_text(re.sub(r'(url\()(/assets/[\w./-]+)(\))', _ver, css.read_text(encoding="utf-8")), encoding="utf-8")
     try:
         LISTINGS = load_listings()
     except (softreal.FeedError, NotImplementedError) as e:
