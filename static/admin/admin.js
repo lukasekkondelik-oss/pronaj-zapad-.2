@@ -84,7 +84,7 @@
   function loadZip() {
     return new Promise(function (res, rej) {
       if (window.JSZip) return res(window.JSZip);
-      var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      var s = document.createElement('script'); s.src = '/admin/vendor/jszip.min.js';
       s.onload = function () { res(window.JSZip); }; s.onerror = function () { rej(new Error('JSZip se nenačetl')); }; document.head.appendChild(s);
     });
   }

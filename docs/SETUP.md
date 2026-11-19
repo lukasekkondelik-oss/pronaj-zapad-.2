@@ -74,6 +74,13 @@ Dashboard → Turnstile → Add site (doména webu). Získáte *Site Key* (veře
 
 Po změně proměnných pro build je potřeba nové nasazení.
 
+### Zabezpečení administrace (kde se zadává heslo)
+- Heslo se nikdy neukládá u nás ani v repozitáři. Přihlášení zpracovává Supabase Auth (heslo se ukládá jen jako otisk) a posílá se šifrovaně (HTTPS).
+- Administrace **nenačítá žádné skripty z cizích serverů**. Knihovny jsou uložené ve `static/admin/vendor/` (verze a zdroj v `README.md` tamtéž).
+- Prohlížeč dostane pro `/admin/` hlavičku **Content-Security-Policy** (`vercel.json`): skripty jen z vlastního webu, spojení jen na vlastní web a `*.supabase.co`, stránku nelze vložit do cizího rámu.
+- Veřejná registrace je v Supabase vypnutá, účty zakládá jen správce.
+- Doporučení: každý uživatel má unikátní silné heslo, nejlépe ve správci hesel. Zapomenuté heslo se zatím nastavuje v Supabase (Authentication → Users).
+
 ### Ověření po prvním nasazení
 ```
 curl -i -X POST https://VAŠE-DOMÉNA/api/podklady -H 'Content-Type: application/json' -d '{}'
