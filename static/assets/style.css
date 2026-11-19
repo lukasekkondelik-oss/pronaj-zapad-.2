@@ -251,3 +251,11 @@ input[type=file]{padding:10px;background:var(--cream)}
 .topbar a{color:var(--gold-l);font-weight:600;text-decoration:underline;white-space:nowrap}
 .topbar a:hover{color:#fff}
 @media (max-width:560px){.topbar{font-size:.8rem;line-height:1.4}}
+
+/* mobilní lišta Zavolat / CTA */
+.mobar{display:none}
+@media (max-width:760px){
+  .mobar{display:flex;gap:10px;position:fixed;left:0;right:0;bottom:0;z-index:60;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(15,26,42,.97);border-top:1px solid rgba(179,155,114,.3)}
+  .mobar .btn{flex:1;justify-content:center;text-align:center;padding:12px 10px}
+  body{padding-bottom:70px}
+}

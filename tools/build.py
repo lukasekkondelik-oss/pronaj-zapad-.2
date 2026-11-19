@@ -18,6 +18,10 @@ GA_ID = os.environ.get("GA_MEASUREMENT_ID", "").strip()                   # voli
 if GA_ID and not re.fullmatch(r"G-[A-Z0-9]{4,20}", GA_ID):
     print("VAROVÁNÍ: GA_MEASUREMENT_ID nemá platný tvar (G-XXXXXXX), analytika se nezapne."); GA_ID = ""
 CONSENT_ON = bool(GA_ID)                                                  # lišta se souhlasem se zapíná jen když existuje volitelný nástroj
+# ověření vlastnictví webu ve vyhledávačích (volitelné; prázdné = značka se nevypíše)
+GOOGLE_VERIFY = os.environ.get("GOOGLE_SITE_VERIFICATION", "").strip()
+BING_VERIFY = os.environ.get("BING_SITE_VERIFICATION", "").strip()
+SEZNAM_VERIFY = os.environ.get("SEZNAM_SITE_VERIFICATION", "").strip()
 TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")   # veřejný klíč Cloudflare Turnstile (antispam u formuláře s fotkami)
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")             # jen pro administraci podkladů (/admin/)
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")                # veřejný klíč, data chrání pravidla v databázi
@@ -199,6 +203,14 @@ def page(path, title, desc, body, graph, og_title=None):
     podklady_js = '<script src="/assets/podklady.js" defer></script>' if has_form else ""
     consent_js = ('<script>window.PZ_CONSENT_CFG=' + json.dumps({"ga": GA_ID}) + ';</script><script src="/assets/consent.js" defer></script>') if CONSENT_ON else ""
     turnstile_js = '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' if (has_form and TURNSTILE_SITE_KEY) else ""
+    verify = "".join(f'<meta name="{n}" content="{E(v)}">' for n, v in (("google-site-verification", GOOGLE_VERIFY), ("msvalidate.01", BING_VERIFY), ("seznam-wmt", SEZNAM_VERIFY)) if v)
+    if "data-zajemce" in body:
+        cta = '<a class="btn" href="#zajem">Mám zájem</a>'
+    elif "data-podklady" in body:
+        cta = '<a class="btn" href="#formular">Vložit nabídku</a>'
+    else:
+        cta = '<a class="btn" href="/#formular">Vložit nabídku</a>'
+    mobar = f'<div class="mobar" role="region" aria-label="Rychlý kontakt"><a class="btn ghost" href="tel:{CO["phones"][0][1]}">Zavolat</a>{cta}</div>'
     return f'''<!doctype html>
 <html lang="cs"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -206,7 +218,7 @@ def page(path, title, desc, body, graph, og_title=None):
 <meta name="description" content="{E(desc)}">
 <link rel="canonical" href="{url(path)}">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
-<meta name="theme-color" content="#0f1a2a">
+<meta name="theme-color" content="#0f1a2a">{verify}
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website"><meta property="og:locale" content="cs_CZ">
 <meta property="og:site_name" content="Pronájmy Západ"><meta property="og:title" content="{E(og_title or title)}">
@@ -218,7 +230,7 @@ def page(path, title, desc, body, graph, og_title=None):
 {header()}
 <main id="obsah">{body}</main>
 {footer()}
-{podklady_js}{consent_js}</body></html>'''
+{mobar}{podklady_js}{consent_js}</body></html>'''
 
 def write(path, content):
     p = OUT / path.strip("/") / "index.html" if path != "/" else OUT / "index.html"
@@ -497,7 +509,7 @@ def listing_page(l):
     intro_bits = [l["type"] + (f' {l["disposition"]}' if l.get("disposition") else ""), where]
     short = f'{" · ".join(intro_bits)}. Nájemné {czk(l["rent_czk"])} měsíčně.'
     captcha = f'<div class="cf-turnstile" data-sitekey="{E(TURNSTILE_SITE_KEY)}" data-language="cs"></div>' if TURNSTILE_SITE_KEY else ""
-    inquiry = f'''<form class="form" data-zajemce novalidate>
+    inquiry = f'''<form class="form" id="zajem" data-zajemce novalidate>
 <h3>Mám zájem o prohlídku</h3><input type="hidden" name="nabidka_id" value="{E(l["id"])}"><input type="hidden" name="nabidka" value="{E(l["title"])}"><input type="hidden" name="nabidka_url" value="{E(url(path))}"><input type="hidden" name="kontakt" value="{E(name)}">
 <div class="row one"><div><label for="q-jmeno">Jméno a příjmení</label><input id="q-jmeno" name="jmeno" required autocomplete="name"></div></div>
 <div class="row"><div><label for="q-tel">Telefon</label><input id="q-tel" name="telefon" type="tel" required autocomplete="tel"></div><div><label for="q-email">E-mail</label><input id="q-email" name="email" type="email" required autocomplete="email"></div></div>
