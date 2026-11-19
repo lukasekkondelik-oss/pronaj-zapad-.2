@@ -6,7 +6,7 @@
   // musí odpovídat RETENTION_DAYS v lib/core.js
   var RETENTION = { nova: 90, v_reseni: 90, zamitnuto: 30, prevzato: 90 };
   var BUCKET = 'submissions', UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-  var filter = 'nova', all = [];
+  var filter = 'nova', all = [], q = '';
 
   if (!C.url || !C.anonKey) {
     app.innerHTML = '<div class="box login"><h2>Chybí konfigurace</h2><p>Při buildu nejsou nastavené proměnné <code>SUPABASE_URL</code> a <code>SUPABASE_ANON_KEY</code>. Viz docs/SETUP.md.</p></div>';
@@ -42,7 +42,14 @@
       sb.auth.signInWithPassword({ email: email.value, password: pass.value }).then(function (r) {
         if (r.error) { err.textContent = 'Přihlášení se nepovedlo: špatný e-mail nebo heslo.'; err.style.display = 'block'; } else start();
       });
-    } }, [h('h2', { text: 'Přihlášení' }), fld('E-mail', email), fld('Heslo', pass), h('div', { class: 'actions' }, [h('button', { class: 'btn', type: 'submit', text: 'Přihlásit se' })]), err]));
+    } }, [h('h2', { text: 'Přihlášení' }), fld('E-mail', email), fld('Heslo', pass), h('div', { class: 'actions' }, [h('button', { class: 'btn', type: 'submit', text: 'Přihlásit se' })]), err,
+      h('p', { class: 'hint' }, [h('a', { href: '#', text: 'Zapomněl(a) jsem heslo', onclick: function (e) {
+        e.preventDefault();
+        if (!email.value) { err.textContent = 'Nejdřív vyplňte e-mail.'; err.style.display = 'block'; return; }
+        sb.auth.resetPasswordForEmail(email.value, { redirectTo: location.origin + '/admin/' }).then(function () {
+          err.className = 'msg'; err.textContent = 'Pokud je e-mail v systému, poslali jsme na něj odkaz pro nastavení nového hesla.'; err.style.display = 'block';
+        });
+      } })])]));
   }
 
   // ---------- seznam ----------
@@ -61,21 +68,32 @@
       var label = k === 'vse' ? 'Vše (' + all.length + ')' : STATUS[k] + ' (' + (counts[k] || 0) + ')';
       return h('button', { class: filter === k ? 'on' : '', text: label, onclick: function () { filter = k; renderList(); } });
     }));
-    var rows = all.filter(function (x) { return filter === 'vse' || x.status === filter; }).map(function (x) {
-      var dl = daysLeft(x);
-      return h('tr', { onclick: function () { detailView(x.id); } }, [
-        h('td', { text: fmtDate(x.created_at) }),
-        h('td', {}, [h('b', { text: x.name })]),
-        h('td', { class: 'hm', text: x.city + ' · ' + x.property_type + (x.disposition ? ' ' + x.disposition : '') }),
-        h('td', { text: String((x.photo_paths || []).length) }),
-        h('td', {}, [h('span', { class: 'badge b-' + x.status, text: STATUS[x.status] || x.status })].concat(x.notified ? [] : [' ', h('span', { class: 'badge warn', text: 'e-mail neodešel' })])),
-        h('td', { class: 'hm', text: dl == null ? '' : 'smaže se za ' + dl + ' dní' })
-      ]);
-    });
+    var search = h('input', { type: 'search', placeholder: 'Hledat podle jména, města nebo typu…', 'aria-label': 'Hledat', value: q, style: 'max-width:340px;margin:0 0 14px' });
+    var holder = h('div');
+    function norm(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+    function drawRows() {
+      var nq = norm(q);
+      var rows = all.filter(function (x) {
+        if (filter !== 'vse' && x.status !== filter) return false;
+        return !nq || norm([x.name, x.city, x.property_type, x.disposition].join(' ')).indexOf(nq) !== -1;
+      }).map(function (x) {
+        var dl = daysLeft(x);
+        return h('tr', { onclick: function () { detailView(x.id); } }, [
+          h('td', { text: fmtDate(x.created_at) }),
+          h('td', {}, [h('b', { text: x.name })]),
+          h('td', { class: 'hm', text: x.city + ' · ' + x.property_type + (x.disposition ? ' ' + x.disposition : '') }),
+          h('td', { text: String((x.photo_paths || []).length) }),
+          h('td', {}, [h('span', { class: 'badge b-' + x.status, text: STATUS[x.status] || x.status })].concat(x.notified ? [] : [' ', h('span', { class: 'badge warn', text: 'e-mail neodešel' })])),
+          h('td', { class: 'hm', text: dl == null ? '' : 'smaže se za ' + dl + ' dní' })
+        ]);
+      });
+      holder.replaceChildren(rows.length ? h('div', { style: 'overflow-x:auto' }, [h('table', { class: 'l' }, [h('thead', {}, [h('tr', {}, ['Přijato', 'Majitel', 'Nemovitost', 'Fotek', 'Stav', ''].map(function (t, i) { return h('th', { text: t, class: i === 2 || i === 5 ? 'hm' : '' }); }))]), h('tbody', {}, rows)])])
+                  : h('p', { text: q ? 'Nic nenalezeno.' : 'V této části zatím nic není.' }));
+    }
+    search.addEventListener('input', function () { q = search.value; drawRows(); });
+    drawRows();
     app.replaceChildren(h('div', { class: 'box' }, [
-      h('h2', { text: 'Podklady od majitelů', style: 'margin-bottom:16px' }), tabs,
-      rows.length ? h('table', { class: 'l' }, [h('thead', {}, [h('tr', {}, ['Přijato', 'Majitel', 'Nemovitost', 'Fotek', 'Stav', ''].map(function (t, i) { return h('th', { text: t, class: i === 2 || i === 5 ? 'hm' : '' }); }))]), h('tbody', {}, rows)])
-                  : h('p', { text: 'V této části zatím nic není.' }),
+      h('h2', { text: 'Podklady od majitelů', style: 'margin-bottom:16px' }), tabs, search, holder,
       h('p', { class: 'hint', text: 'Podklady ve stavu Nová, V řešení a Převzato se po 90 dnech od poslední změny stavu automaticky mažou včetně fotek, Zamítnuto po 30 dnech. Fotky a údaje, které potřebujete, si stáhněte dřív.' })
     ]));
   }
@@ -166,5 +184,21 @@
       if (UUID.test(hash)) detailView(hash); else listView();
     });
   }
-  start();
+  function resetView() {
+    who.textContent = '';
+    var p1 = h('input', { type: 'password', required: true, minlength: 10, autocomplete: 'new-password' });
+    var p2 = h('input', { type: 'password', required: true, minlength: 10, autocomplete: 'new-password' });
+    var err = h('p', { class: 'msg err' }); err.style.display = 'none';
+    app.replaceChildren(h('form', { class: 'box login', onsubmit: function (e) {
+      e.preventDefault();
+      if (p1.value !== p2.value) { err.textContent = 'Hesla se neshodují.'; err.style.display = 'block'; return; }
+      sb.auth.updateUser({ password: p1.value }).then(function (r) {
+        if (r.error) { err.textContent = 'Heslo se nepodařilo změnit: ' + r.error.message; err.style.display = 'block'; }
+        else { history.replaceState(null, '', location.pathname); toast('Heslo je změněné.'); start(); }
+      });
+    } }, [h('h2', { text: 'Nové heslo' }), h('p', { class: 'hint', text: 'Alespoň 10 znaků.' }), fld('Nové heslo', p1), fld('Zopakujte heslo', p2), h('div', { class: 'actions' }, [h('button', { class: 'btn', type: 'submit', text: 'Uložit heslo' })]), err]));
+  }
+  if (/type=recovery/.test(location.hash)) {
+    sb.auth.onAuthStateChange(function (ev) { if (ev === 'PASSWORD_RECOVERY') resetView(); });
+  } else start();
 })();
