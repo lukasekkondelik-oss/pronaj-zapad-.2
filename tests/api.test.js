@@ -132,7 +132,7 @@ test('Turnstile: bez tokenu a se špatným tokenem 403, správný projde, bez ko
   }
 });
 
-test('cleanup: vyžaduje tajný klíč a maže podle lhůt, převzaté nechává', async () => {
+test('cleanup: vyžaduje tajný klíč a maže podle lhůt (i převzaté po 90 dnech)', async () => {
   const daysAgo = (d) => new Date(Date.now() - d * 86400000).toISOString();
   const seed = (id, status, created, changed) => { mock.rows.push({ id, status, created_at: created, status_changed_at: changed, name: id, photo_paths: [`${id}/1.jpg`] }); mock.files.set(`${id}/1.jpg`, JPEG()); };
   seed('00000000-0000-4000-8000-0000000000a1', 'rozpracovano', daysAgo(2), daysAgo(2));   // smazat
@@ -142,15 +142,16 @@ test('cleanup: vyžaduje tajný klíč a maže podle lhůt, převzaté nechává
   seed('00000000-0000-4000-8000-0000000000c1', 'v_reseni', daysAgo(120), daysAgo(91));      // smazat
   seed('00000000-0000-4000-8000-0000000000d1', 'zamitnuto', daysAgo(40), daysAgo(31));      // smazat
   seed('00000000-0000-4000-8000-0000000000d2', 'zamitnuto', daysAgo(40), daysAgo(5));       // nechat
-  seed('00000000-0000-4000-8000-0000000000e1', 'prevzato', daysAgo(500), daysAgo(500));     // nechat
+  seed('00000000-0000-4000-8000-0000000000e1', 'prevzato', daysAgo(500), daysAgo(95));      // smazat (převzato se maže po 90 dnech)
+  seed('00000000-0000-4000-8000-0000000000e2', 'prevzato', daysAgo(500), daysAgo(20));      // nechat
   assert.equal((await core.handleCleanup({ headers: {} })).status, 401);
   assert.equal((await core.handleCleanup({ headers: { authorization: 'Bearer jiny' } })).status, 401);
   const r = await core.handleCleanup({ headers: { authorization: 'Bearer cron' } });
   assert.equal(r.status, 200);
-  assert.equal(r.body.smazano.nova, 1); assert.equal(r.body.smazano.v_reseni, 1); assert.equal(r.body.smazano.zamitnuto, 1);
+  assert.equal(r.body.smazano.nova, 1); assert.equal(r.body.smazano.v_reseni, 1); assert.equal(r.body.smazano.zamitnuto, 1); assert.equal(r.body.smazano.prevzato, 1);
   const ids = mock.rows.map((x) => x.id);
-  for (const gone of ['a1', 'b1', 'c1', 'd1']) { assert.ok(!ids.includes(`00000000-0000-4000-8000-0000000000${gone}`), gone); assert.ok(!mock.files.has(`00000000-0000-4000-8000-0000000000${gone}/1.jpg`), gone + ' soubor'); }
-  for (const kept of ['a2', 'b2', 'd2', 'e1']) { assert.ok(ids.includes(`00000000-0000-4000-8000-0000000000${kept}`), kept); }
+  for (const gone of ['a1', 'b1', 'c1', 'd1', 'e1']) { assert.ok(!ids.includes(`00000000-0000-4000-8000-0000000000${gone}`), gone); assert.ok(!mock.files.has(`00000000-0000-4000-8000-0000000000${gone}/1.jpg`), gone + ' soubor'); }
+  for (const kept of ['a2', 'b2', 'd2', 'e2']) { assert.ok(ids.includes(`00000000-0000-4000-8000-0000000000${kept}`), kept); }
 });
 
 // ---------- „Mám zájem“ (/api/poptavka) ----------

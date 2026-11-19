@@ -4,7 +4,7 @@
   var app = document.getElementById('app'), who = document.getElementById('who'), toastEl = document.getElementById('toast');
   var STATUS = { nova: 'Nová', v_reseni: 'V řešení', prevzato: 'Převzato', zamitnuto: 'Zamítnuto' };
   // musí odpovídat RETENTION_DAYS v lib/core.js
-  var RETENTION = { nova: 90, v_reseni: 90, zamitnuto: 30, prevzato: null };
+  var RETENTION = { nova: 90, v_reseni: 90, zamitnuto: 30, prevzato: 90 };
   var BUCKET = 'submissions', UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   var filter = 'nova', all = [];
 
@@ -76,7 +76,7 @@
       h('h2', { text: 'Podklady od majitelů', style: 'margin-bottom:16px' }), tabs,
       rows.length ? h('table', { class: 'l' }, [h('thead', {}, [h('tr', {}, ['Přijato', 'Majitel', 'Nemovitost', 'Fotek', 'Stav', ''].map(function (t, i) { return h('th', { text: t, class: i === 2 || i === 5 ? 'hm' : '' }); }))]), h('tbody', {}, rows)])
                   : h('p', { text: 'V této části zatím nic není.' }),
-      h('p', { class: 'hint', text: 'Podklady ve stavu Nová a V řešení se po 90 dnech mažou, Zamítnuto po 30 dnech. Převzato zůstává.' })
+      h('p', { class: 'hint', text: 'Podklady ve stavu Nová, V řešení a Převzato se po 90 dnech od poslední změny stavu automaticky mažou včetně fotek, Zamítnuto po 30 dnech. Fotky a údaje, které potřebujete, si stáhněte dřív.' })
     ]));
   }
 

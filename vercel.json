@@ -55,5 +55,8 @@
     "api/*.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "regions": [
+    "dub1"
+  ]
 }

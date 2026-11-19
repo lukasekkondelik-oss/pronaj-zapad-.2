@@ -5,6 +5,7 @@ Změna domény, kontaktů nebo textů = úprava konstant níže a nové spuště
 """
 import json, html, pathlib, datetime, os, re, shutil, sys
 import softreal
+import legal
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "dist"
@@ -13,6 +14,10 @@ LISTINGS = []     # aktuální nabídky ze Softrealu
 REFERENCES = []   # realizované obchody (ručně, data/references.json)
 DOMAIN = "https://pronajemzapad.cz"          # TODO: nahradit skutečnou doménou
 PROJECT = "pronajemzapad"                    # identifikátor webu v poptávkách (systém bude sdílený s dalšími weby)
+GA_ID = os.environ.get("GA_MEASUREMENT_ID", "").strip()                   # volitelná analytika; prázdné = bez analytiky a bez cookie lišty
+if GA_ID and not re.fullmatch(r"G-[A-Z0-9]{4,20}", GA_ID):
+    print("VAROVÁNÍ: GA_MEASUREMENT_ID nemá platný tvar (G-XXXXXXX), analytika se nezapne."); GA_ID = ""
+CONSENT_ON = bool(GA_ID)                                                  # lišta se souhlasem se zapíná jen když existuje volitelný nástroj
 TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")   # veřejný klíč Cloudflare Turnstile (antispam u formuláře s fotkami)
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")             # jen pro administraci podkladů (/admin/)
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")                # veřejný klíč, data chrání pravidla v databázi
@@ -133,7 +138,7 @@ def form_html(idp="f", place=None):
 <div class="row one"><div><label for="{idp}-fotky">Fotografie (nepovinné, až 12)</label><input id="{idp}-fotky" type="file" accept="image/*" multiple data-fotky>
 <p class="hint">Přidejte fotky přímo z telefonu. Před odesláním se automaticky zmenší a uvidí je jen makléř.</p><div class="pgrid" data-prev></div></div></div>
 <div class="hp" aria-hidden="true"><label>Web<input name="web" tabindex="-1" autocomplete="off"></label></div>
-<label class="consent"><input type="checkbox" name="souhlas" required> <span>Souhlasím se zpracováním osobních údajů a fotografií pro účely vyřízení mé nabídky. <a href="/ochrana-osobnich-udaju/">Více informací</a></span></label>
+<label class="consent"><input type="checkbox" name="souhlas" required> <span>Přečetl(a) jsem si <a href="/ochrana-osobnich-udaju/">zásady ochrany osobních údajů</a>. Beru na vědomí, že mé údaje a fotografie budou zpracovány za účelem vyřízení mé nabídky.</span></label>
 {captcha}
 <button class="btn" type="submit">Odeslat nabídku →</button>
 <p class="msg" role="status" aria-live="polite"></p>
@@ -164,7 +169,7 @@ def footer():
 <li><a href="{MAIN_SITE}" rel="noopener">Hlavní web ALFA ESTATE →</a></li></ul></div>
 </div>
 <div class="legal"><span>© {datetime.date.today().year} {E(CO["name"])} · IČO {CO["ico"]} · Sídlo: {E(CO["seat"])}</span>
-<span><a href="/ochrana-osobnich-udaju/">Ochrana osobních údajů</a> · <a href="{MAIN_SITE}" rel="noopener">alfaestate.cz</a></span></div>
+<span><a href="/ochrana-osobnich-udaju/">Ochrana osobních údajů</a> · <a href="/cookies/">Cookies</a>{' · <a href="#" data-cookie-settings>Nastavení cookies</a>' if CONSENT_ON else ''} · <a href="{MAIN_SITE}" rel="noopener">alfaestate.cz</a></span></div>
 </div></footer><script src="/assets/main.js" defer></script>'''
 
 ORG = {
@@ -191,6 +196,7 @@ def page(path, title, desc, body, graph, og_title=None):
     ld = json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False, indent=1)
     has_form = "data-podklady" in body or "data-zajemce" in body
     podklady_js = '<script src="/assets/podklady.js" defer></script>' if has_form else ""
+    consent_js = ('<script>window.PZ_CONSENT_CFG=' + json.dumps({"ga": GA_ID}) + ';</script><script src="/assets/consent.js" defer></script>') if CONSENT_ON else ""
     turnstile_js = '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' if (has_form and TURNSTILE_SITE_KEY) else ""
     return f'''<!doctype html>
 <html lang="cs"><head>
@@ -211,7 +217,7 @@ def page(path, title, desc, body, graph, og_title=None):
 {header()}
 <main id="obsah">{body}</main>
 {footer()}
-{podklady_js}</body></html>'''
+{podklady_js}{consent_js}</body></html>'''
 
 def write(path, content):
     p = OUT / path.strip("/") / "index.html" if path != "/" else OUT / "index.html"
@@ -321,21 +327,15 @@ def place_pages():
 
 def privacy():
     path = "/ochrana-osobnich-udaju/"
-    body = f'''<section><div class="wrap"><div class="prose"><p class="crumbs" style="color:var(--muted)"><a href="/">Pronájmy Západ</a> › Ochrana osobních údajů</p>
-<h1 style="font-size:2.4rem">Ochrana osobních údajů</h1>
-<p><b>Správce:</b> {E(CO["name"])}, IČO {CO["ico"]}, sídlo {E(CO["seat"])}. Provozovna: {CO["street"]}, {CO["zip"]} {CO["city"]} – {CO["district"]}. Kontakt: <a href="mailto:{CO["email"]}">{CO["email"]}</a>, <a href="tel:+420603382392">603 382 392</a>.</p>
-<h2>Jaké údaje zpracováváme a proč</h2>
-<p>Údaje z formuláře (jméno, telefon, e-mail a informace o nemovitosti) zpracováváme za účelem vyřízení vaší poptávky a případného uzavření smlouvy o zprostředkování. Právním základem je provedení opatření před uzavřením smlouvy na vaši žádost a náš oprávněný zájem na vyřízení dotazu.</p>
-<h2>Jak dlouho údaje uchováváme</h2>
-<p>Po dobu nezbytnou pro vyřízení poptávky a následně po dobu, kterou ukládá zákon nebo jejíž uchování je nezbytné k ochraně našich právních nároků.</p>
-<h2>Vaše práva</h2>
-<p>Máte právo na přístup k údajům, jejich opravu, výmaz, omezení zpracování, přenositelnost a právo vznést námitku. Máte také právo podat stížnost u Úřadu pro ochranu osobních údajů (<a href="https://www.uoou.cz" rel="noopener">uoou.cz</a>).</p>
-<h2>Cookies</h2>
-<p>Tento web může používat cookies. Technické cookies nutné pro fungování webu používáme vždy. Analytické a marketingové cookies používáme jen s vaším souhlasem, který můžete kdykoli změnit.</p>
-<p><small>Text je vstupní návrh a před spuštěním by ho měl zkontrolovat právník nebo pověřená osoba správce.</small></p></div></div></section>'''
     graph = [ORG, {"@type": "WebPage", "@id": url(path) + "#webpage", "url": url(path), "name": "Ochrana osobních údajů", "inLanguage": "cs"}]
-    html_ = page(path, "Ochrana osobních údajů | Pronájmy Západ", "Informace o zpracování osobních údajů na webu Pronájmy Západ.", body, graph).replace('content="index,follow,max-image-preview:large,max-snippet:-1"', 'content="noindex,follow"')
-    write(path, html_)
+    html_ = page(path, "Ochrana osobních údajů | Pronájmy Západ", "Informace o zpracování osobních údajů na webu Pronájmy Západ.", legal.privacy_html(CO, E), graph)
+    write(path, html_.replace('content="index,follow,max-image-preview:large,max-snippet:-1"', 'content="noindex,follow"'))
+
+def cookies_page():
+    path = "/cookies/"
+    graph = [ORG, {"@type": "WebPage", "@id": url(path) + "#webpage", "url": url(path), "name": "Zásady používání cookies", "inLanguage": "cs"}]
+    html_ = page(path, "Zásady používání cookies | Pronájmy Západ", "Jaké cookies používá web Pronájmy Západ a jak je spravovat.", legal.cookies_html(CO, E, CONSENT_ON, GA_ID), graph)
+    write(path, html_.replace('content="index,follow,max-image-preview:large,max-snippet:-1"', 'content="noindex,follow"'))
 
 def not_found():
     body = '<section><div class="wrap"><div class="prose"><h1>Stránka nenalezena</h1><p>Tuhle adresu neznáme. Vraťte se na <a href="/">úvodní stranu</a> nebo nám zavolejte na <a href="tel:+420603382392">603 382 392</a>.</p></div></div></section>'
@@ -502,7 +502,7 @@ def listing_page(l):
 <div class="row"><div><label for="q-tel">Telefon</label><input id="q-tel" name="telefon" type="tel" required autocomplete="tel"></div><div><label for="q-email">E-mail</label><input id="q-email" name="email" type="email" required autocomplete="email"></div></div>
 <div class="row one"><div><label for="q-zprava">Zpráva</label><textarea id="q-zprava" name="zprava" placeholder="Např. kdy byste se mohli přijít podívat"></textarea></div></div>
 <div class="hp" aria-hidden="true"><label>Web<input name="web" tabindex="-1" autocomplete="off"></label></div>
-<label class="consent"><input type="checkbox" name="souhlas" required> <span>Souhlasím se zpracováním osobních údajů pro účely vyřízení poptávky. <a href="/ochrana-osobnich-udaju/">Více informací</a></span></label>
+<label class="consent"><input type="checkbox" name="souhlas" required> <span>Přečetl(a) jsem si <a href="/ochrana-osobnich-udaju/">zásady ochrany osobních údajů</a>. Beru na vědomí, že mé údaje budou zpracovány za účelem vyřízení poptávky.</span></label>
 {captcha}<button class="btn" type="submit">Odeslat poptávku →</button><p class="msg" role="status" aria-live="polite"></p></form>'''
     body = f'''<section style="padding:36px 0 84px"><div class="wrap">
 <p class="crumbs" style="color:var(--muted)"><a href="/">Pronájmy Západ</a> › <a href="/nabidky/">Nabídky</a> › {E(l["title"])}</p>
@@ -553,7 +553,7 @@ if __name__ == "__main__":
     except (softreal.FeedError, NotImplementedError) as e:
         sys.exit(f"CHYBA: {e}\nBuild zastaven, hosting ponechá předchozí funkční verzi webu.")
     REFERENCES = load_references()
-    home(); place_pages(); privacy(); not_found(); listings_page()
+    home(); place_pages(); privacy(); cookies_page(); not_found(); listings_page()
     for l in LISTINGS: listing_page(l)
     static_files(); admin_config()
     print(f"hotovo, nabídek: {len(LISTINGS)}, referencí: {len(REFERENCES)}")

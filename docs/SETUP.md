@@ -45,7 +45,7 @@ Postup u majitele:
 2. Funkce `api/podklady.js` (logika v `lib/core.js`) ověří antispam (Cloudflare Turnstile, honeypot, časová past, limit 5 odeslání za hodinu z jedné IP), uloží údaje do Supabase a přijme fotky jednu po druhé (kontroluje, že jde opravdu o JPEG do 2 MB).
 3. Po dokončení pošle upozornění do Make (e-mail makléřce s odkazem na podklady, potvrzení majiteli, řádek v Google Sheets). Když Make nefunguje, podklady se uloží stejně a v administraci svítí „e-mail neodešel“.
 4. Makléřka podklady zpracuje v `/admin/` (stavy Nová / V řešení / Převzato / Zamítnuto, poznámka, stažení fotek v ZIP).
-5. Denní cron `api/cleanup.js` maže: nedokončené po 1 dni, Nová a V řešení po 90 dnech, Zamítnuto po 30 dnech od poslední změny stavu. **Převzato se nemaže.** Lhůty jsou v `RETENTION_DAYS` v `lib/core.js` (a pro zobrazení v `static/admin/admin.js`).
+5. Denní cron `api/cleanup.js` maže: nedokončené po 1 dni, Nová, V řešení a Převzato po 90 dnech, Zamítnuto po 30 dnech od poslední změny stavu. Lhůty jsou v `RETENTION_DAYS` v `lib/core.js` (a pro zobrazení v `static/admin/admin.js`).
 
 ### Nastavení Supabase (jednorázově)
 1. Projekt v regionu EU. V **SQL Editoru** spusťte celý `supabase/schema.sql`.
@@ -70,6 +70,7 @@ Dashboard → Turnstile → Add site (doména webu). Získáte *Site Key* (veře
 | `IP_SALT` | jen funkce | libovolný dlouhý náhodný řetězec |
 | `CRON_SECRET` | jen funkce | libovolný dlouhý náhodný řetězec, Vercel ho posílá cronu automaticky |
 | `PUBLIC_URL` | jen funkce | např. `https://pronajemzapad.cz` (odkaz v e-mailu) |
+| `GA_MEASUREMENT_ID` | build | **volitelné**: Google Analytics 4 (G-XXXXXXX). Bez něj web nenastavuje žádné volitelné cookies a lišta se nezobrazuje. S ním se zapne cookie lišta a analytika se načte až po souhlasu. |
 
 Po změně proměnných pro build je potřeba nové nasazení.
 
