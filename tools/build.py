@@ -25,7 +25,7 @@ MAIN_SITE = "https://alfaestate.cz"
 TODAY = datetime.date.today().isoformat()
 
 CO = dict(
-    name="ALFA ESTATE V&S Partners s.r.o.", ico="10799796",
+    name="ALFA ESTATE V&S Partners s.r.o.", ico="10799796", dic="CZ10799796",   # DIČ právnické osoby = CZ + IČO; ověřit v ADIS (adisreg.mfcr.cz)
     street="Majakovského 707/29", zip="360 05", city="Karlovy Vary", district="Rybáře",
     seat="V. Meerwalda 57/8, 360 06 Karlovy Vary – Dvory",
     email="alfaestate@alfaestate.cz",
@@ -163,12 +163,12 @@ def footer():
 <div><h4>Lokality</h4><ul><li><a href="/nabidky/">Aktuální nabídky</a></li>{pl}</ul></div>
 <div><h4>Kontakt</h4><ul>
 <li>{E(CO["street"])}, {E(CO["district"])}<br>{CO["zip"]} {CO["city"]}</li>{ph}
-<li><a href="mailto:{CO["email"]}">{CO["email"]}</a></li><li>IČO: {CO["ico"]}</li></ul></div>
+<li><a href="mailto:{CO["email"]}">{CO["email"]}</a></li><li>IČO: {CO["ico"]}<br>DIČ: {CO["dic"]}</li></ul></div>
 <div><h4>Otevírací doba</h4><ul><li>Po – Pá: 9:00 – 17:00</li><li>Sobota: dle dohody</li><li>Neděle: zavřeno</li>
 <li><a class="btn sm" href="/#formular" style="color:var(--navy);margin-top:8px">Nabídnout nemovitost</a></li>
 <li><a href="{MAIN_SITE}" rel="noopener">Hlavní web ALFA ESTATE →</a></li></ul></div>
 </div>
-<div class="legal"><span>© {datetime.date.today().year} {E(CO["name"])} · IČO {CO["ico"]} · Sídlo: {E(CO["seat"])}</span>
+<div class="legal"><span>© {datetime.date.today().year} {E(CO["name"])} · IČO {CO["ico"]} · DIČ {CO["dic"]} · Sídlo: {E(CO["seat"])}</span>
 <span><a href="/ochrana-osobnich-udaju/">Ochrana osobních údajů</a> · <a href="/cookies/">Cookies</a>{' · <a href="#" data-cookie-settings>Nastavení cookies</a>' if CONSENT_ON else ''} · <a href="{MAIN_SITE}" rel="noopener">alfaestate.cz</a></span></div>
 </div></footer><script src="/assets/main.js" defer></script>'''
 
@@ -176,7 +176,7 @@ ORG = {
  "@type": ["RealEstateAgent", "LocalBusiness"], "@id": DOMAIN + "/#org",
  "name": "ALFA ESTATE V&S Partners s.r.o.", "alternateName": "Pronájmy Západ",
  "url": MAIN_SITE + "/", "logo": DOMAIN + "/assets/favicon.svg",
- "taxID": CO["ico"], "vatID": None,
+ "taxID": CO["ico"], "vatID": CO["dic"],
  "telephone": "+420603382392", "email": CO["email"],
  "address": {"@type": "PostalAddress", "streetAddress": CO["street"], "addressLocality": "Karlovy Vary", "postalCode": "36005", "addressRegion": "Karlovarský kraj", "addressCountry": "CZ"},
  "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "09:00", "closes": "17:00"}],
@@ -352,7 +352,7 @@ def static_files():
     (OUT / "robots.txt").write_text(rb, encoding="utf-8")
     ll = f"""# Pronájmy Západ
 
-> Regionální portál pro majitele nemovitostí, kteří chtějí pronajmout byt nebo dům v Karlovarském kraji. Zveřejnění nabídky je pro majitele zdarma; doplňkové služby (fotografie, prohlídky, nájemní smlouva) se sjednávají předem. Portál provozuje realitní kancelář ALFA ESTATE V&S Partners s.r.o. (IČO {CO["ico"]}), Karlovy Vary, člen Realitní komory ČR.
+> Regionální portál pro majitele nemovitostí, kteří chtějí pronajmout byt nebo dům v Karlovarském kraji. Zveřejnění nabídky je pro majitele zdarma; doplňkové služby (fotografie, prohlídky, nájemní smlouva) se sjednávají předem. Portál provozuje realitní kancelář ALFA ESTATE V&S Partners s.r.o. (IČO {CO["ico"]}, DIČ {CO["dic"]}), Karlovy Vary, člen Realitní komory ČR.
 
 ## Hlavní stránky
 - [Úvod – pronájem pro majitele]({DOMAIN}/): co nabízíme, jak spolupráce probíhá, formulář a časté dotazy

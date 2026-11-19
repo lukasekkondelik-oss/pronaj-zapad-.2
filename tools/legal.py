@@ -17,7 +17,7 @@ def privacy_html(co, e):
 <p>Společnost ALFA ESTATE V&amp;S Partners s. r. o. zpracovává osobní údaje v souladu s Nařízením Evropského parlamentu a Rady (EU) 2016/679 (GDPR) a zákonem č. 110/2019 Sb., o zpracování osobních údajů. Tyto zásady popisují, jak se údaje zpracovávají na webu Pronájmy Západ.</p>
 
 <h2>1. Správce osobních údajů</h2>
-<p><b>{e(co["name"])}</b><br>Sídlo: {seat}<br>Provozovna: {street}, {zipc} {city} – {district}<br>IČO: {co["ico"]}<br>Zapsaná v obchodním rejstříku vedeném u Krajského soudu v Plzni<br>E-mail: <a href="mailto:{co["email"]}">{co["email"]}</a><br>Telefon: {co["phones"][0][0]}</p>
+<p><b>{e(co["name"])}</b><br>Sídlo: {seat}<br>Provozovna: {street}, {zipc} {city} – {district}<br>IČO: {co["ico"]}<br>DIČ: {co["dic"]}<br>Zapsaná v obchodním rejstříku vedeném u Krajského soudu v Plzni<br>E-mail: <a href="mailto:{co["email"]}">{co["email"]}</a><br>Telefon: {co["phones"][0][0]}</p>
 <p>Web Pronájmy Západ provozuje realitní kancelář. Obecné informace o realitní kanceláři najdete na <a href="https://alfaestate.cz" rel="noopener">alfaestate.cz</a>.</p>
 
 <h2>2. Jaké osobní údaje zpracováváme, proč a jak dlouho</h2>
@@ -96,7 +96,7 @@ def cookies_html(co, e, consent_on, ga_id):
     return f'''<section><div class="wrap"><div class="prose legal">
 <p class="crumbs" style="color:var(--muted)"><a href="/">Pronájmy Západ</a> › Cookies</p>
 <h1 style="font-size:2.4rem">Zásady používání cookies</h1>
-<p><b>Účinné od {EFFECTIVE}.</b> Správcem je {e(co["name"])}, IČO {co["ico"]}. Obecné zásady zpracování osobních údajů najdete v <a href="/ochrana-osobnich-udaju/">zásadách ochrany osobních údajů</a>.</p>
+<p><b>Účinné od {EFFECTIVE}.</b> Správcem je {e(co["name"])}, IČO {co["ico"]}, DIČ {co["dic"]}. Obecné zásady zpracování osobních údajů najdete v <a href="/ochrana-osobnich-udaju/">zásadách ochrany osobních údajů</a>.</p>
 
 <h2>Co jsou cookies</h2>
 <p>Cookies jsou malé soubory, které si web ukládá ve vašem prohlížeči. Podobně fungují i jiné technologie, například úložiště prohlížeče (localStorage). V těchto zásadách je souhrnně nazýváme cookies.</p>
