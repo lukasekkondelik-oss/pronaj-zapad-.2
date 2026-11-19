@@ -172,7 +172,9 @@ def footer():
 <li><a href="mailto:{CO["email"]}">{CO["email"]}</a></li><li>IČO: {CO["ico"]}<br>DIČ: {CO["dic"]}</li></ul></div>
 <div><h4>Otevírací doba</h4><ul><li>Po – Pá: 9:00 – 17:00</li><li>Sobota: dle dohody</li><li>Neděle: zavřeno</li>
 <li><a class="btn sm" href="/#formular" style="color:var(--navy);margin-top:8px">Nabídnout nemovitost</a></li>
-<li><a href="{MAIN_SITE}" rel="noopener">Hlavní web ALFA ESTATE →</a></li></ul></div>
+<li><a href="{MAIN_SITE}" rel="noopener">Hlavní web ALFA ESTATE →</a></li></ul>
+<h4 class="soc-h">Sledujte nás</h4>
+<a class="soc" href="https://www.instagram.com/alfaestate_vs_partners/" target="_blank" rel="noopener" aria-label="ALFA ESTATE na Instagramu, @alfaestate_vs_partners"><span class="soc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".6" fill="currentColor"/></svg></span><span class="soc-t"><b>Instagram</b><small>@alfaestate_vs_partners</small></span></a></div>
 </div>
 <div class="legal"><span>© {datetime.date.today().year} {E(CO["name"])} · IČO {CO["ico"]} · DIČ {CO["dic"]} · Sídlo: {E(CO["seat"])}</span>
 <span><a href="/ochrana-osobnich-udaju/">Ochrana osobních údajů</a> · <a href="/cookies/">Cookies</a>{' · <a href="#" data-cookie-settings>Nastavení cookies</a>' if CONSENT_ON else ''} · <a href="{MAIN_SITE}" rel="noopener">alfaestate.cz</a></span></div>
@@ -187,6 +189,7 @@ ORG = {
  "address": {"@type": "PostalAddress", "streetAddress": CO["street"], "addressLocality": "Karlovy Vary", "postalCode": "36005", "addressRegion": "Karlovarský kraj", "addressCountry": "CZ"},
  "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "09:00", "closes": "17:00"}],
  "areaServed": [{"@type": "AdministrativeArea", "name": "Karlovarský kraj"}],
+ "sameAs": ["https://www.instagram.com/alfaestate_vs_partners/"],
  "memberOf": {"@type": "Organization", "name": "Realitní komora České republiky"},
  "contactPoint": [{"@type": "ContactPoint", "telephone": "+420603382392", "contactType": "customer service", "areaServed": "CZ", "availableLanguage": "cs"}],
  "employee": [{"@type": "Person", "name": "Soňa Petříková", "jobTitle": "Certifikovaná realitní makléřka", "telephone": "+420603382392"}, {"@type": "Person", "name": "Vít Čirik", "jobTitle": "Realitní makléř a stavební specialista", "telephone": "+420776686776"}],

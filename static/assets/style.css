@@ -307,3 +307,11 @@ input[type=file]{padding:10px;background:var(--cream)}
  .phframe::after{right:-8px;bottom:-8px}
 }
 .person h3{font:500 clamp(1.8rem,3vw,2.4rem)/1.15 var(--serif);margin:4px 0 6px;color:var(--navy)}
+
+.ftr .soc-h{margin-top:36px}
+.soc{display:flex;align-items:center;gap:12px;margin-top:16px;padding:12px 14px;border:1px solid var(--gold);color:#fff;text-decoration:none;max-width:100%;transition:background .2s}
+.soc:hover{background:rgba(179,155,114,.12)}
+.soc-ic{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--gold);color:var(--navy)}
+.soc-ic svg{width:22px;height:22px}
+.soc-t b{display:block;font:600 1.05rem var(--sans);color:#fff}
+.soc-t small{display:block;color:#c3c9d4;font-size:.82rem;white-space:nowrap}
