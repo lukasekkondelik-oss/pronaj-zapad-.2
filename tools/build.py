@@ -155,7 +155,7 @@ def header(active=""):
 <a class="brand" href="/" aria-label="Pronájmy Západ – úvodní strana">{ROOF}<span><b>Pronájmy Západ</b><small>Karlovarský kraj</small></span></a>
 <button class="burger" aria-expanded="false" aria-controls="nav">Menu</button>
 <nav class="nav" id="nav" aria-label="Hlavní navigace">
-<a href="/nabidky/">Nabídky</a><a href="/#jak-to-funguje">Pro majitele</a><a href="/#lokality">Lokality</a><a href="/#faq">Časté dotazy</a>
+<a href="/nabidky/">Nabídky</a><a href="/#jak-to-funguje">Pro majitele</a><a href="/#lokality">Lokality</a><a href="/o-nas/">O nás</a><a href="/#faq">Časté dotazy</a>
 <a class="btn sm" href="/#formular">Vložit nabídku zdarma</a></nav></div></header>'''
 
 def footer():
@@ -166,7 +166,7 @@ def footer():
 <div><a class="brand" href="/">{ROOF}<span><b>Pronájmy Západ</b><small>Karlovarský kraj</small></span></a>
 <a class="ftr-logo" href="{MAIN_SITE}" rel="noopener" aria-label="ALFA ESTATE V&amp;S Partners, hlavní web"><img src="/assets/logo-alfa-light.png" alt="ALFA ESTATE V&amp;S Partners" width="180" height="63" loading="lazy"></a>
 <p style="margin-top:18px">Regionální portál pronájmů pro majitele nemovitostí. Provozuje realitní kancelář <a href="{MAIN_SITE}" rel="noopener">ALFA ESTATE V&amp;S Partners</a>, certifikovanou realitní kancelář v Karlových Varech. Člen Realitní komory ČR.</p></div>
-<div><h4>Lokality</h4><ul><li><a href="/nabidky/">Aktuální nabídky</a></li>{pl}</ul></div>
+<div><h4>Lokality</h4><ul><li><a href="/nabidky/">Aktuální nabídky</a></li>{pl}<li><a href="/o-nas/">O nás</a></li></ul></div>
 <div><h4>Kontakt</h4><ul>
 <li>{E(CO["street"])}, {E(CO["district"])}<br>{CO["zip"]} {CO["city"]}</li>{ph}
 <li><a href="mailto:{CO["email"]}">{CO["email"]}</a></li><li>IČO: {CO["ico"]}<br>DIČ: {CO["dic"]}</li></ul></div>
@@ -189,7 +189,7 @@ ORG = {
  "areaServed": [{"@type": "AdministrativeArea", "name": "Karlovarský kraj"}],
  "memberOf": {"@type": "Organization", "name": "Realitní komora České republiky"},
  "contactPoint": [{"@type": "ContactPoint", "telephone": "+420603382392", "contactType": "customer service", "areaServed": "CZ", "availableLanguage": "cs"}],
- "employee": [{"@type": "Person", "name": "Soňa Petříková", "telephone": "+420603382392"}, {"@type": "Person", "name": "Vít Čirik", "telephone": "+420776686776"}],
+ "employee": [{"@type": "Person", "name": "Soňa Petříková", "jobTitle": "Certifikovaná realitní makléřka", "telephone": "+420603382392"}, {"@type": "Person", "name": "Vít Čirik", "jobTitle": "Realitní makléř a stavební specialista", "telephone": "+420776686776"}],
 }
 ORG = {k: v for k, v in ORG.items() if v is not None}
 
@@ -294,9 +294,10 @@ def home():
 <div class="panel"><div class="rule"></div><h2>Známe místní trh. A záleží nám na každé nabídce.</h2>
 <p>Pronájmy Západ provozuje realitní kancelář <a href="{MAIN_SITE}" rel="noopener"><b>ALFA ESTATE</b></a>, která dlouhodobě působí v Karlovarském kraji. Spojujeme znalost regionu, profesionální přístup a osobní péči o každou nemovitost.</p>
 <div class="facts"><div><b>16+ let</b>na realitním trhu Karlovarského kraje</div><div><b>Certifikovaná</b>realitní kancelář</div><div><b>Člen RK ČR</b>Realitní komory České republiky</div></div>
-<p><a href="{MAIN_SITE}" rel="noopener">Více o realitní kanceláři na alfaestate.cz →</a></p></div>
+<p><a href="/o-nas/">Více o nás →</a> · <a href="{MAIN_SITE}" rel="noopener">alfaestate.cz</a></p></div>
 </div></section>
 
+{about_teaser()}
 {latest_block()}
 {realized_block()}
 <section class="alt" id="lokality"><div class="wrap">
@@ -322,6 +323,99 @@ def home():
       {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in FAQ]}]
     write("/", page("/", "Pronájem nemovitostí v Karlovarském kraji | Pronájmy Západ",
         "Pronajímáte byt nebo dům v Karlovarském kraji? Zveřejnění nabídky zdarma, pomoc s fotkami, prohlídkami i nájemní smlouvou. Provozuje realitní kancelář ALFA ESTATE.", body, graph))
+
+
+# ---------- O NÁS ----------
+VAL_ICON = {
+ "hands": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l4-4 4 2 3-2 3 3 4-1"/><path d="M3 11v5l5 4 3-1 2 1 4-3 3-2v-4"/><path d="M8 15l3 2"/></svg>',
+ "shield": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>',
+ "person": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+ "star": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
+ "medal": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="15" r="5"/><path d="M8.5 11 6 3h5l1 4m3.5 4L18 3h-5"/></svg>',
+}
+TEAM = [
+ dict(key="sona", name="Soňa Petříková", role="Certifikovaná realitní makléřka", img="/assets/team/sona.jpg", size=(506, 582), tel="+420603382392", tel_h="603 382 392",
+      quote="Každou nemovitost řeším srdcem, každého klienta s respektem.",
+      bio=["Jsem certifikovaná realitní makléřka s více než šestnáctiletou zkušeností na realitním trhu v Karlovarském kraji. Ke každému klientovi přistupuji individuálně, s maximální péčí, respektem a důrazem na osobní přístup.",
+           "Zakládám si na zkušenostech, spolehlivosti, diskrétnosti a schopnosti hledat řešení, která vedou k úspěšnému výsledku. Domluvím se také německy a anglicky, takže ráda pomohu i zahraničním klientům."],
+      stats=[("16+", "let praxe"), ("550+", "prodaných nemovitostí"), ("900+", "pronájmů")]),
+ dict(key="vit", name="Vít Čirik", role="Realitní makléř a stavební specialista", img="/assets/team/vit.jpg", size=(512, 588), tel="+420776686776", tel_h="776 686 776",
+      quote="Reality jsou pro mě víc než obor, jsou mou skutečnou vášní.",
+      bio=["Každodenně sleduji realitní trh, vyhledávám výjimečné obchodní příležitosti a hledám řešení, která přinášejí klientům i naší společnosti skutečnou hodnotu.",
+           "Specializuji se na rekonstrukce, investice a výstavbu domů na klíč, které mám v rámci společnosti na starosti. Ke každému projektu přistupuji s důrazem na detail, kvalitu provedení a dlouhodobý smysl celé investice."],
+      stats=[("50+", "realizací staveb"), ("100 %", "na klíč"), ("16+", "let v oboru")]),
+]
+VALUES = [
+ ("hands", "Důvěra", "Každý obchod vedeme s maximální odpovědností. Klient musí mít jistotu, že je v dobrých rukou."),
+ ("shield", "Diskrétnost", "Citlivé informace chráníme s naprostou profesionalitou. Diskrétnost je pro nás samozřejmostí."),
+ ("person", "Individuální přístup", "Každý klient je jedinečný. Přizpůsobujeme strategii přesně jeho situaci, potřebám a očekáváním."),
+ ("star", "Profesionální servis", "Kompletní servis bez kompromisů, od prvního kontaktu přes právní servis až po úspěšné předání."),
+ ("medal", "Zkušenosti", "16 let na realitním trhu Karlovarského kraje. Stovky úspěšných obchodů jsou naší nejlepší vizitkou."),
+]
+STATS = [("16+", "let zkušeností"), ("550+", "prodaných nemovitostí"), ("900+", "realizovaných pronájmů"), ("1 200+", "spokojených klientů")]
+
+def team_cards_mini():
+    out = ""
+    for t in TEAM:
+        w, h = t["size"]
+        out += (f'<a class="mini" href="/o-nas/#{t["key"]}"><img src="{t["img"]}" alt="{E(t["name"])}, {E(t["role"].lower())}" width="{w}" height="{h}" loading="lazy">'
+                f'<span><b>{E(t["name"])}</b><small>{E(t["role"])}</small></span></a>')
+    return out
+
+def about_teaser():
+    return f"""<section class="alt" id="tym"><div class="wrap split">
+<div><span class="eyebrow">Kdo se o vás postará</span><h2>Dva makléři, jedno místo kontaktu.</h2>
+<p style="color:var(--muted)">O pronájmy v Karlovarském kraji se starají Soňa Petříková a Vít Čirik z realitní kanceláře ALFA ESTATE. Přes 16 let zkušeností, osobní přístup a diskrétnost.</p>
+<a class="btn" href="/o-nas/">Více o nás →</a></div>
+<div class="minis">{team_cards_mini()}</div></div></section>"""
+
+def about_page():
+    path = "/o-nas/"
+    stats = "".join(f'<div><b>{n}</b><span>{l}</span></div>' for n, l in STATS)
+    vals = "".join(f'<article class="val">{VAL_ICON[i]}<h3>{t}</h3><p>{d}</p></article>' for i, t, d in VALUES)
+    people = ""
+    for k, t in enumerate(TEAM):
+        w, h = t["size"]
+        st = "".join(f'<div><b>{n}</b><span>{l}</span></div>' for n, l in t["stats"])
+        bio = "".join(f"<p>{E(x)}</p>" for x in t["bio"])
+        people += f"""<article class="person{' rev' if k % 2 else ''}" id="{t['key']}">
+<figure class="phframe"><img src="{t['img']}" alt="{E(t['name'])}, {E(t['role'].lower())}" width="{w}" height="{h}" loading="lazy"></figure>
+<div><span class="eyebrow">{E(t['role'])}</span><h3>{E(t['name'])}</h3>
+<blockquote>„{E(t['quote'])}“</blockquote>{bio}
+<div class="pstats">{st}</div>
+<p class="pcontact"><a href="tel:{t['tel']}">{t['tel_h']}</a> · <a href="mailto:{CO['email']}">{CO['email']}</a></p></div></article>"""
+    body = f"""
+<section class="about-hero"><div class="wrap split">
+<figure class="phframe wide"><img src="/assets/team/tym.jpg" alt="Soňa Petříková a Vít Čirik, realitní makléři ALFA ESTATE" width="776" height="446"></figure>
+<div><span class="eyebrow">O nás</span><h1>Realitní kancelář s osobním přístupem.</h1>
+<blockquote>„Reality nejsou jen obchod. Jsou to životní příběhy, nové začátky a zásadní rozhodnutí.“</blockquote>
+<p>Pronájmy Západ provozuje certifikovaná realitní kancelář ALFA ESTATE V&amp;S Partners, členové Realitní komory České republiky, s více než šestnáctiletou praxí v oboru. Za tu dobu jsme si vybudovali styl práce založený na důvěře, osobním přístupu a precizním vedení každého obchodu, od prvního kontaktu až po úspěšné předání nemovitosti.</p>
+<ul class="ticks">
+<li>{ICON['check']}<div><b>Certifikovaná kancelář, člen Realitní komory ČR</b></div></li>
+<li>{ICON['check']}<div><b>Individuální strategie a plný servis od A do Z</b></div></li>
+<li>{ICON['check']}<div><b>Právní servis včetně advokátní úschovy</b></div></li>
+<li>{ICON['check']}<div><b>Výstavba rodinných domů na klíč</b></div></li></ul>
+<p><a href="{MAIN_SITE}" rel="noopener">Hlavní web ALFA ESTATE na alfaestate.cz →</a></p></div></div></section>
+
+<section class="dark statband"><div class="wrap"><div class="stats">{stats}</div></div></section>
+
+<section><div class="wrap">
+<div class="head"><div><span class="eyebrow">Proč právě my</span><h2>Na čem stavíme.</h2></div>
+<p>Spojení zkušeností, profesionality a spolehlivosti pro majitele, kteří očekávají víc než běžný realitní servis.</p></div>
+<div class="vals">{vals}</div></div></section>
+
+<section class="alt"><div class="wrap">
+<div class="head"><div><span class="eyebrow">Lidé za značkou</span><h2>Náš tým.</h2></div><p>Dva odborníci, jeden cíl: výsledek, který předčí vaše očekávání.</p></div>
+{people}</div></section>
+
+<section class="dark ctaband"><div class="wrap">
+<div><span class="eyebrow">Kontakt</span><h2>Domluvme si nezávaznou konzultaci.</h2>
+<p>Napište nám nebo zavolejte. Rádi si vyslechneme vaši situaci a navrhneme nejvhodnější řešení, bez závazků. Jsme vám k dispozici každý pracovní den od 9:00 do 17:00.</p></div>
+<div class="cta"><a class="btn" href="/#formular">Napsat nám →</a><a class="btn ghost" href="tel:{CO['phones'][0][1]}">{CO['phones'][0][0]}</a></div></div></section>"""
+    persons = [{"@type": "Person", "@id": f"{DOMAIN}/o-nas/#{t['key']}", "name": t["name"], "jobTitle": t["role"], "telephone": t["tel"], "image": DOMAIN + t["img"], "worksFor": {"@id": DOMAIN + "/#org"}, "url": url(path) + "#" + t["key"]} for t in TEAM]
+    graph = [ORG, *persons, {"@type": "AboutPage", "@id": url(path) + "#webpage", "url": url(path), "name": "O nás – ALFA ESTATE, provozovatel Pronájmů Západ", "inLanguage": "cs", "about": {"@id": DOMAIN + "/#org"}, "isPartOf": {"@id": DOMAIN + "/#website"}}]
+    write(path, page(path, "O nás: realitní kancelář ALFA ESTATE | Pronájmy Západ",
+        "Realitní kancelář s osobním přístupem a více než 16 lety praxe v Karlovarském kraji. Soňa Petříková a Vít Čirik, certifikovaní makléři ALFA ESTATE.", body, graph))
 
 # ---------- MĚSTA ----------
 def place_pages():
@@ -369,7 +463,7 @@ def not_found():
     (OUT / "404.html").write_text(h, encoding="utf-8")
 
 def static_files():
-    paths = ["/", "/nabidky/"] + [f"/pronajem-{s}/" for s in PLACES] + [f"/nabidky/{l['slug']}/" for l in LISTINGS]
+    paths = ["/", "/nabidky/", "/o-nas/"] + [f"/pronajem-{s}/" for s in PLACES] + [f"/nabidky/{l['slug']}/" for l in LISTINGS]
     sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join(
         f"<url><loc>{url(p)}</loc><lastmod>{TODAY}</lastmod><priority>{'1.0' if p=='/' else '0.8'}</priority></url>\n" for p in paths) + "</urlset>\n"
     (OUT / "sitemap.xml").write_text(sm, encoding="utf-8")
@@ -581,7 +675,7 @@ if __name__ == "__main__":
     except (softreal.FeedError, NotImplementedError) as e:
         sys.exit(f"CHYBA: {e}\nBuild zastaven, hosting ponechá předchozí funkční verzi webu.")
     REFERENCES = load_references()
-    home(); place_pages(); privacy(); cookies_page(); not_found(); listings_page()
+    home(); about_page(); place_pages(); privacy(); cookies_page(); not_found(); listings_page()
     for l in LISTINGS: listing_page(l)
     static_files(); admin_config()
     print(f"hotovo, nabídek: {len(LISTINGS)}, referencí: {len(REFERENCES)}")
