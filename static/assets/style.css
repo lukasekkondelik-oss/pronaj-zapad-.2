@@ -259,3 +259,6 @@ input[type=file]{padding:10px;background:var(--cream)}
   .mobar .btn{flex:1;justify-content:center;text-align:center;padding:12px 10px}
   body{padding-bottom:70px}
 }
+
+.ftr-logo{display:inline-block;margin-top:22px;opacity:.95}
+.ftr-logo img{display:block;width:180px;height:auto}

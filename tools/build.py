@@ -164,6 +164,7 @@ def footer():
     return f'''<footer class="ftr"><div class="wrap">
 <div class="cols">
 <div><a class="brand" href="/">{ROOF}<span><b>Pronájmy Západ</b><small>Karlovarský kraj</small></span></a>
+<a class="ftr-logo" href="{MAIN_SITE}" rel="noopener" aria-label="ALFA ESTATE V&amp;S Partners, hlavní web"><img src="/assets/logo-alfa-light.png" alt="ALFA ESTATE V&amp;S Partners" width="180" height="63" loading="lazy"></a>
 <p style="margin-top:18px">Regionální portál pronájmů pro majitele nemovitostí. Provozuje realitní kancelář <a href="{MAIN_SITE}" rel="noopener">ALFA ESTATE V&amp;S Partners</a>, certifikovanou realitní kancelář v Karlových Varech. Člen Realitní komory ČR.</p></div>
 <div><h4>Lokality</h4><ul><li><a href="/nabidky/">Aktuální nabídky</a></li>{pl}</ul></div>
 <div><h4>Kontakt</h4><ul>
@@ -180,7 +181,7 @@ def footer():
 ORG = {
  "@type": ["RealEstateAgent", "LocalBusiness"], "@id": DOMAIN + "/#org",
  "name": "ALFA ESTATE V&S Partners s.r.o.", "alternateName": "Pronájmy Západ",
- "url": MAIN_SITE + "/", "logo": DOMAIN + "/assets/favicon.svg",
+ "url": MAIN_SITE + "/", "logo": DOMAIN + "/assets/logo-alfa-dark.png",
  "taxID": CO["ico"], "vatID": CO["dic"],
  "telephone": "+420603382392", "email": CO["email"],
  "address": {"@type": "PostalAddress", "streetAddress": CO["street"], "addressLocality": "Karlovy Vary", "postalCode": "36005", "addressRegion": "Karlovarský kraj", "addressCountry": "CZ"},
