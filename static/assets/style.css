@@ -1,6 +1,6 @@
 :root{
   --navy:#0f1a2a;--navy-2:#16253a;--navy-3:#1f3250;
-  --gold:#b39b72;--gold-d:#8f7a54;--gold-l:#d8c9a8;
+  --gold:#b39b72;--gold-d:#7d6a46;--gold-l:#d8c9a8;
   --cream:#f6f2ea;--cream-2:#ece5d6;--paper:#fff;
   --ink:#17202e;--muted:#5b6574;--line:#e3dccb;
   --ok:#2f7d5b;--err:#b3261e;
@@ -245,3 +245,9 @@ input[type=file]{padding:10px;background:var(--cream)}
 .legal ul{padding-left:1.2em;margin:0 0 1em}.legal li{margin:.25em 0}
 .tw{overflow-x:auto;margin:0 0 1.2em}.facts-t.lt th,.facts-t.lt td{padding:10px 12px 10px 0;font-size:.9rem;font-weight:400;color:var(--ink);width:auto}
 .facts-t.lt thead th{font-weight:600;color:var(--navy)}
+
+/* top bar: odhad ceny */
+.topbar{background:#0a121e;color:#d4d9e2;font-size:.85rem;text-align:center;padding:8px 16px;border-bottom:1px solid rgba(179,155,114,.2)}
+.topbar a{color:var(--gold-l);font-weight:600;text-decoration:underline;white-space:nowrap}
+.topbar a:hover{color:#fff}
+@media (max-width:560px){.topbar{font-size:.8rem;line-height:1.4}}

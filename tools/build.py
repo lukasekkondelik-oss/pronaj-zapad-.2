@@ -97,7 +97,7 @@ PLACES = {
          "Zveřejnění nabídky je zdarma. Prohlídky, komunikaci se zájemci i smlouvu můžeme převzít, pokud si to přejete."],
    faq=[("Přijedete se na nemovitost podívat osobně?", "Ano. Nemovitost si prohlédneme, nafotíme a společně doladíme, jak ji nabídnout.")]),
  "marianske-lazne": dict(name="Mariánské Lázně", loc="v Mariánských Lázních", sub="Lázeňské město",
-   title="Pronájem bytu a domu v Mariánských Lázních pro majitele",
+   title="Pronájem bytu a domu v Mariánských Lázních",
    desc="Pronajímáte nemovitost v Mariánských Lázních? Zveřejnění zdarma, pomoc s fotkami, prohlídkami a nájemní smlouvou. Regionální portál ALFA ESTATE.",
    intro="Mariánské Lázně mají specifický trh: lázeňský charakter města přitahuje různé typy nájemníků. Pomůžeme vám nabídku nastavit tak, aby oslovila ty správné.",
    body=["Než nabídku zveřejníme, probereme s vámi, zda je pro vaši nemovitost nejvhodnější dlouhodobý pronájem, a nastavíme podmínky tak, aby vám vyhovovaly.",
@@ -146,6 +146,7 @@ def form_html(idp="f", place=None):
 
 def header(active=""):
     return f'''<a class="skip" href="#obsah">Přeskočit na obsah</a>
+<div class="topbar">Zajímá vás jen odhad ceny nemovitosti? <a href="https://www.odhadnemovitostialfa.cz/" target="_blank" rel="noopener">Zjistěte ho zde →</a></div>
 <header class="hdr"><div class="wrap">
 <a class="brand" href="/" aria-label="Pronájmy Západ – úvodní strana">{ROOF}<span><b>Pronájmy Západ</b><small>Karlovarský kraj</small></span></a>
 <button class="burger" aria-expanded="false" aria-controls="nav">Menu</button>
@@ -294,7 +295,7 @@ def home():
       {"@type": "WebPage", "@id": DOMAIN + "/#webpage", "url": DOMAIN + "/", "name": "Pronájmy Západ – pronájem nemovitostí v Karlovarském kraji pro majitele", "isPartOf": {"@id": DOMAIN + "/#website"}, "about": {"@id": DOMAIN + "/#org"}, "inLanguage": "cs", "dateModified": TODAY},
       service("/", "Pronájem nemovitostí pro majitele v Karlovarském kraji", {"@type": "AdministrativeArea", "name": "Karlovarský kraj"}),
       {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in FAQ]}]
-    write("/", page("/", "Pronájem nemovitostí v Karlovarském kraji pro majitele | Pronájmy Západ",
+    write("/", page("/", "Pronájem nemovitostí v Karlovarském kraji | Pronájmy Západ",
         "Pronajímáte byt nebo dům v Karlovarském kraji? Zveřejnění nabídky zdarma, pomoc s fotkami, prohlídkami i nájemní smlouvou. Provozuje realitní kancelář ALFA ESTATE.", body, graph))
 
 # ---------- MĚSTA ----------
