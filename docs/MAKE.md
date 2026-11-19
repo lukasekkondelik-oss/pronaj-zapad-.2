@@ -49,3 +49,20 @@ V `tools/build.py` nastavte `FORM_ENDPOINT = "https://hook.eu2.make.com/…"` (U
 - **Tabulka poptávek:** jedna Google tabulka [Poptávky – Pronájmy Západ](https://docs.google.com/spreadsheets/d/16zshsxj3ZuDZIwlW6ZCWmI2SNxqTXl6OK3QIi4p9D9g/edit) (vlastník `alfaestate@alfaestate.info`), jeden list pro oba typy poptávek. Sloupec „Formulář“ rozlišuje `majitel` a `zajemce`.
 - **Sloupce:** Odesláno, Formulář, Web, Jméno, Telefon, E-mail, Typ nemovitosti, Dispozice, Město, Plocha, Nájemné, K dispozici od, Popis / zpráva, Zájem o pomoc, Nabídka, Odkaz na nabídku, Kontaktní makléř, ID podkladů, Odkaz do administrace, Počet fotek, Stránka odeslání, Souhlas, Stav vyřízení, Poznámka.
 - **Make:** tým *My Team*. Stávající scénář „ALFA ESTATE – poptávka z webu → e-mail makléřům“ (nepoužitý, jiný formát dat) se nemění, nové scénáře A a B vzniknou vedle něj.
+
+## Hotové scénáře (19. 11. 2026, tým *My Team*, zóna eu1)
+| Scénář | ID | Webhook | Kdo ho volá |
+|---|---|---|---|
+| A: Mám zájem o prohlídku | 8675366 | „Pronájmy Západ – Mám zájem (zájemce)“ | formulář pod nabídkou |
+| B: Podklady od majitele | 8675367 | „Pronájmy Západ – Podklady od majitele“ | serverová funkce `api/podklady` (proměnná `MAKE_WEBHOOK_URL`) |
+
+**Adresy webhooků se do repozitáře nevkládají.** Jsou v Make (Scenarios → webhook) a nastavují se jen jako proměnné prostředí / v nastavení webu.
+
+Oba scénáře dělají totéž: e-mail makléři na `alfaestate@alfaestate.info`, potvrzení odesílateli, řádek do tabulky. Pořadí kroků je záměrné (e-maily dřív než tabulka), takže chyba zápisu neodepře makléři upozornění. Neplatný e-mail nebo chybějící souhlas se zahodí.
+
+### Poučení z nasazení
+- E-mailový modul je `google-email:sendAnEmail` ve **verzi 4** (starší `ActionSendEmail` verze 2 s tímto propojením nefunguje).
+- Zápis do Sheets vyžaduje `valueInputOption: RAW`. Díky tomu se texty od návštěvníků vloží jako prostý text a **nemůže se z nich v tabulce stát vzorec** (otestováno s textem `=1+1`).
+- Texty od návštěvníků se v e-mailech escapují (`escapeHTML`), aby šlo do upozornění vložit HTML.
+- List v tabulce se jmenuje **„Untitled“**. Přejmenování listu rozbije zápis, dokud se v modulu „Add a Row“ nezmění název listu.
+- Tarif Make nyní povoluje **2 aktivní scénáře**. Další (kontrola Softrealu) vyžaduje vyšší tarif.
